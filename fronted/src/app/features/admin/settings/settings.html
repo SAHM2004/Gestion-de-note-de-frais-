@@ -1,0 +1,309 @@
+
+<div class="flex flex-grow overflow-hidden h-[calc(100vh-64px)] relative">
+  <section class="flex-1 bg-background overflow-y-auto p-[24px] h-full w-full">
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <nav class="flex items-center text-body-md text-on-surface-variant mb-1">
+          <span>Administration</span>
+          <span class="material-symbols-outlined text-[16px] mx-2">chevron_right</span>
+          <span class="text-primary font-bold">
+            @if (activeTab === 'categories') { Catégories de dépenses }
+            @else if (activeTab === 'departments') { Départements }
+            @else { Utilisateurs }
+          </span>
+        </nav>
+        <p class="text-sm text-on-surface-variant">
+          @if (activeTab === 'categories') { Gérez les catégories de dépenses disponibles pour les notes de frais. }
+          @else if (activeTab === 'departments') { Gérez les services de la Direction Technique et de la Direction Générale. }
+          @else { Créez et gérez les comptes utilisateurs avec leurs rôles et départements. }
+        </p>
+      </div>
+      <button (click)="openCreateModal()" class="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:brightness-110 shadow-sm transition-all">
+        @if (activeTab === 'categories') { + Nouvelle catégorie }
+        @else if (activeTab === 'departments') { + Nouveau département }
+        @else { + Nouvel utilisateur }
+      </button>
+    </div>
+
+    <div class="max-w-5xl space-y-8 pb-20">
+      <div class="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+
+        @if (activeTab === 'categories') {
+          <table class="w-full text-left border-collapse">
+            <thead class="bg-surface-container-low">
+              <tr>
+                <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase">Nom de la catégorie</th>
+                <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase">Code</th>
+                <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant">
+              @for (cat of paginatedCategories(); track cat.id) {
+                <tr class="hover:bg-surface-container-lowest">
+                  <td class="px-6 py-4 font-bold text-primary">{{ cat.name }}</td>
+                  <td class="px-6 py-4 text-on-surface-variant font-mono">{{ cat.code }}</td>
+                  <td class="px-6 py-4 text-right">
+                    <span (click)="openEditModal(cat, 'category')" class="material-symbols-outlined text-secondary cursor-pointer hover:opacity-80">edit</span>
+                    <span (click)="deleteCategory(cat.id)" class="material-symbols-outlined text-error cursor-pointer hover:opacity-80 ml-2">delete</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (catTotalPages() > 0) {
+            <div class="px-6 py-4 border-t border-outline-variant flex items-center justify-between">
+              <span class="text-sm text-on-surface-variant">Page {{ catPage() + 1 }} sur {{ catTotalPages() }}</span>
+              <div class="flex items-center gap-1">
+                <button (click)="goToPage('categories', catPage() - 1)" [disabled]="catPage() === 0"
+                  class="p-2 rounded-lg hover:bg-surface-container transition-colors disabled:opacity-30">‹</button>
+                @for (p of catPageNumbers(); track p) {
+                  <button (click)="goToPage('categories', p)"
+                    [class]="p === catPage() ? 'w-9 h-9 rounded-lg bg-primary text-white text-sm font-bold' : 'w-9 h-9 rounded-lg hover:bg-surface-container text-sm'">
+                    {{ p + 1 }}
+                  </button>
+                }
+                <button (click)="goToPage('categories', catPage() + 1)" [disabled]="catPage() === catTotalPages() - 1"
+                  class="p-2 rounded-lg hover:bg-surface-container transition-colors disabled:opacity-30">›</button>
+              </div>
+            </div>
+          }
+        }
+
+        @if (activeTab === 'departments') {
+          <table class="w-full text-left border-collapse">
+            <thead class="bg-surface-container-low">
+              <tr>
+                <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase">Nom du service</th>
+                <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase">Manager responsable</th>
+                <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant">
+              @for (dep of paginatedDepartments(); track dep.id) {
+                <tr class="hover:bg-surface-container-lowest">
+                  <td class="px-6 py-4 font-bold text-primary">{{ dep.name }}</td>
+                  <td class="px-6 py-4 text-on-surface-variant">{{ dep.manager?.name || 'Aucun manager' }}</td>
+                  <td class="px-6 py-4 text-right">
+                    <span (click)="openEditModal(dep, 'department')" class="material-symbols-outlined text-secondary cursor-pointer hover:opacity-80">edit</span>
+                    <span (click)="deleteDepartment(dep.id)" class="material-symbols-outlined text-error cursor-pointer hover:opacity-80 ml-2">delete</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (depTotalPages() > 0) {
+            <div class="px-6 py-4 border-t border-outline-variant flex items-center justify-between">
+              <span class="text-sm text-on-surface-variant">Page {{ depPage() + 1 }} sur {{ depTotalPages() }}</span>
+              <div class="flex items-center gap-1">
+                <button (click)="goToPage('departments', depPage() - 1)" [disabled]="depPage() === 0"
+                  class="p-2 rounded-lg hover:bg-surface-container transition-colors disabled:opacity-30">‹</button>
+                @for (p of depPageNumbers(); track p) {
+                  <button (click)="goToPage('departments', p)"
+                    [class]="p === depPage() ? 'w-9 h-9 rounded-lg bg-primary text-white text-sm font-bold' : 'w-9 h-9 rounded-lg hover:bg-surface-container text-sm'">
+                    {{ p + 1 }}
+                  </button>
+                }
+                <button (click)="goToPage('departments', depPage() + 1)" [disabled]="depPage() === depTotalPages() - 1"
+                  class="p-2 rounded-lg hover:bg-surface-container transition-colors disabled:opacity-30">›</button>
+              </div>
+            </div>
+          }
+        }
+
+        @if (activeTab === 'users') {
+          <div class="px-6 py-4 border-b border-outline-variant flex flex-col sm:flex-row sm:items-center justify-between bg-surface-container-low gap-4">
+            <h3 class="font-bold text-on-surface">Liste des Utilisateurs</h3>
+            <div class="flex items-center gap-3">
+              <label class="text-sm font-bold text-on-surface-variant whitespace-nowrap">Filtrer par service :</label>
+              <select (change)="onUserFilterChange($event)" [value]="userFilterDepartment()" class="px-3 py-1.5 border border-outline-variant rounded-lg focus:outline-none focus:border-primary bg-white text-sm cursor-pointer w-full sm:w-64">
+                <option value="">Tous les services</option>
+                @for (d of departments(); track d.id) {
+                  <option [value]="d.id">{{ d.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <table class="w-full text-left border-collapse">
+            <thead class="bg-surface-container-low">
+              <tr>
+                <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase">Nom complet</th>
+                <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase">E-mail</th>
+                <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase">Service</th>
+                <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase">Rôle</th>
+                <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant">
+              @for (u of paginatedUsers(); track u.id) {
+                <tr class="hover:bg-surface-container-lowest">
+                  <td class="px-6 py-4 font-bold text-primary">{{ u.name }}</td>
+                  <td class="px-6 py-4 text-on-surface-variant">{{ u.email }}</td>
+                  <td class="px-6 py-4 text-on-surface-variant">{{ u.department?.name || '-' }}</td>
+                  <td class="px-6 py-4">
+                    <span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold">{{ getRoleLabel(u.role) }}</span>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    @if (u.role !== RoleType.ADMIN) {
+                      <span (click)="openEditModal(u, 'user')" class="material-symbols-outlined text-secondary cursor-pointer hover:opacity-80">edit</span>
+                      <span (click)="deleteUser(u.id)" class="material-symbols-outlined text-error cursor-pointer hover:opacity-80 ml-2">delete</span>
+                    } @else {
+                      <span class="text-xs text-on-surface-variant italic">Compte système</span>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="px-6 py-8 text-center text-on-surface-variant italic">Aucun utilisateur trouvé.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (userTotalPages() > 0) {
+            <div class="px-6 py-4 border-t border-outline-variant flex items-center justify-between">
+              <span class="text-sm text-on-surface-variant">Page {{ userPage() + 1 }} sur {{ userTotalPages() }}</span>
+              <div class="flex items-center gap-1">
+                <button (click)="goToPage('users', userPage() - 1)" [disabled]="userPage() === 0"
+                  class="p-2 rounded-lg hover:bg-surface-container transition-colors disabled:opacity-30">‹</button>
+                @for (p of userPageNumbers(); track p) {
+                  <button (click)="goToPage('users', p)"
+                    [class]="p === userPage() ? 'w-9 h-9 rounded-lg bg-primary text-white text-sm font-bold' : 'w-9 h-9 rounded-lg hover:bg-surface-container text-sm'">
+                    {{ p + 1 }}
+                  </button>
+                }
+                <button (click)="goToPage('users', userPage() + 1)" [disabled]="userPage() === userTotalPages() - 1"
+                  class="p-2 rounded-lg hover:bg-surface-container transition-colors disabled:opacity-30">›</button>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </section>
+
+  @if (showModal) {
+    <div class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center">
+      <div class="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl border border-outline-variant">
+        <h3 class="font-headline-md text-headline-sm font-bold text-primary mb-6">
+          @if (editMode) {
+            @if (modalType === 'category') { Modifier la catégorie }
+            @else if (modalType === 'department') { Modifier le service }
+            @else { Modifier l'utilisateur }
+          } @else {
+            @if (modalType === 'category') { Ajouter une catégorie }
+            @else if (modalType === 'department') { Ajouter un service }
+            @else { Ajouter un utilisateur }
+          }
+        </h3>
+
+        <div class="space-y-4 mb-8">
+          @if (modalType === 'category') {
+            <div>
+              <label class="block text-label-md font-bold mb-2">Nom de la catégorie</label>
+              <input type="text" [(ngModel)]="catName" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-primary bg-transparent" placeholder="Ex. Hébergement">
+            </div>
+            <div>
+              <label class="block text-label-md font-bold mb-2">Code</label>
+              <input type="text" [(ngModel)]="catCode" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-primary bg-transparent" placeholder="Ex. HEB">
+            </div>
+          }
+
+          @if (modalType === 'department') {
+            <div>
+              <label class="block text-label-md font-bold mb-2">Nom du service</label>
+              <input type="text" [(ngModel)]="depName" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-primary bg-transparent" placeholder="Ex. Direction Générale - RH">
+            </div>
+            <div>
+              <label class="block text-label-md font-bold mb-2">Manager responsable</label>
+              <select [(ngModel)]="depManagerId" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-primary bg-transparent cursor-pointer">
+                <option value="">— Aucun —</option>
+                @for (u of users(); track u.id) {
+                  <option [value]="u.id">{{ u.name }} ({{ getRoleLabel(u.role) }})</option>
+                }
+              </select>
+            </div>
+          }
+
+          @if (modalType === 'user') {
+            <div>
+              <label class="block text-label-md font-bold mb-2">Nom complet</label>
+              <input type="text" [(ngModel)]="userName" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-primary bg-transparent" placeholder="Ex. Adama Diop">
+            </div>
+            <div>
+              <label class="block text-label-md font-bold mb-2">Adresse e-mail</label>
+              <input type="email" [(ngModel)]="userEmail" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-primary bg-transparent" placeholder="Ex. adama.diop@ids.com">
+            </div>
+            <div>
+              <label class="block text-label-md font-bold mb-2">Rôle</label>
+              <select [(ngModel)]="userRole" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-primary bg-transparent cursor-pointer">
+                @for (r of assignableRoles; track r) {
+                  <option [value]="r">{{ getRoleLabel(r) }}</option>
+                }
+              </select>
+            </div>
+            @if (userRole !== RoleType.GENERAL_DIRECTOR && userRole !== RoleType.TECHNICAL_DIRECTOR && userRole !== RoleType.ADMIN) {
+              <div>
+                <label class="block text-label-md font-bold mb-2">Service / Département</label>
+                <select [(ngModel)]="userDepId" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-primary bg-transparent cursor-pointer">
+                  <option value="">— Aucun —</option>
+                  @for (d of departments(); track d.id) {
+                    <option [value]="d.id">{{ d.name }}</option>
+                  }
+                </select>
+              </div>
+            }
+            @if (!editMode) {
+              <div>
+                <label class="block text-label-md font-bold mb-2">Mot de passe initial</label>
+                <input type="text" [(ngModel)]="userInitialPassword" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-primary bg-transparent" placeholder="Mot de passe temporaire">
+                <p class="text-xs text-on-surface-variant mt-1">L'utilisateur pourra le modifier depuis son profil.</p>
+              </div>
+            }
+          }
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <button (click)="closeModal()" class="px-5 py-2 border rounded-lg text-on-surface-variant hover:bg-surface-container transition-all">Annuler</button>
+          <button (click)="saveItem()" class="px-5 py-2 bg-primary text-white rounded-lg font-bold hover:brightness-110 shadow-md transition-all">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+  }
+
+<!-- ==================== MODALE DE SUPPRESSION ADMIN ==================== -->
+@if (showDeleteModal()) {
+  <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-all duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full border border-slate-100 overflow-hidden transform transition-all animate-in fade-in zoom-in-95">
+      <!-- Header -->
+      <div class="bg-rose-50 p-6 pb-4 border-b border-rose-100 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-2xl">delete_forever</span>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-slate-800">Confirmer la suppression</h3>
+          <p class="text-xs text-rose-600 font-medium">Action irréversible</p>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="p-6 space-y-3">
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Êtes-vous sûr de vouloir supprimer <strong class="text-slate-900 font-semibold">{{ deleteTarget()?.label }}</strong> ?
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div class="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-slate-100">
+        <button type="button" (click)="closeDeleteModal()" 
+                class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200/60 rounded-xl transition-all">
+          Annuler
+        </button>
+        <button type="button" (click)="confirmDelete()" 
+                class="px-5 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-md shadow-rose-600/20 rounded-xl transition-all flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-[18px]">delete</span>
+          Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+}
+</div>

@@ -1,0 +1,110 @@
+<div class="bg-surface sticky top-16 z-40 px-[24px] py-2 flex flex-col md:flex-row justify-between items-center border-b border-outline-variant shadow-sm">
+  <div class="flex items-center gap-2">
+    <span class="material-symbols-outlined text-primary">analytics</span>
+    <h1 class="font-bold text-primary">Analyses des dépenses</h1>
+    <span class="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-semibold">{{ scopeLabel() }}</span>
+  </div>
+</div>
+
+<div class="p-[24px]">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+      <div class="p-2 bg-secondary/10 rounded-lg inline-block mb-4">
+        <span class="material-symbols-outlined text-secondary">payments</span>
+      </div>
+      <p class="text-on-surface-variant text-label-md uppercase tracking-wider mb-1">Total remboursé</p>
+      <h3 class="font-headline-md text-headline-md text-primary">{{ totalReimbursed() | number }} <span class="text-sm font-normal">FCFA</span></h3>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm border-l-4 border-l-orange-400">
+      <div class="p-2 bg-orange-100 rounded-lg inline-block mb-4">
+        <span class="material-symbols-outlined text-orange-600">pending_actions</span>
+      </div>
+      <p class="text-on-surface-variant text-label-md uppercase tracking-wider mb-1">Montant en attente</p>
+      <h3 class="font-headline-md text-headline-md text-primary">{{ totalPending() | number }} <span class="text-sm font-normal">FCFA</span></h3>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+      <div class="p-2 bg-error-container/40 rounded-lg inline-block mb-4">
+        <span class="material-symbols-outlined text-error">cancel</span>
+      </div>
+      <p class="text-on-surface-variant text-label-md uppercase tracking-wider mb-1">Taux de rejet</p>
+      <h3 class="font-headline-md text-headline-md text-primary">{{ rejectionRate() }} %</h3>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-12 gap-4">
+    <!-- Graphique par département -->
+    <div class="col-span-12 lg:col-span-8 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+      <h4 class="font-headline-sm text-headline-sm text-primary mb-6">Dépenses par service</h4>
+      @if (departmentStats().length === 0) {
+        <p class="text-center text-on-surface-variant py-12 italic">Aucune donnée disponible pour cette période.</p>
+      } @else {
+        <div class="h-[320px] flex items-end justify-around gap-4 px-4 border-b border-outline-variant pb-4">
+          @for (dep of departmentStats(); track dep.fullName) {
+            <div class="flex flex-col items-center gap-2 flex-1 max-w-[80px]">
+              <div class="w-full bg-primary rounded-t-sm hover:brightness-110 transition-all cursor-pointer relative group"
+                   [style.height.px]="barHeight(dep.total)"
+                   [title]="dep.total | number">
+                <span class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 whitespace-nowrap">
+                  {{ dep.total | number }} FCFA
+                </span>
+              </div>
+              <span class="font-label-md text-[11px] text-on-surface-variant text-center leading-tight">{{ dep.shortName }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Top catégories -->
+    <div class="col-span-12 lg:col-span-4 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+      <h4 class="font-headline-sm text-headline-sm text-primary mb-6">Top 5 catégories</h4>
+      <div class="space-y-4">
+        @for (cat of topCategories(); track cat.name) {
+          <div>
+            <div class="flex justify-between mb-1">
+              <span class="text-body-md">{{ cat.name }}</span>
+              <span class="font-bold text-primary">{{ cat.percent }} %</span>
+            </div>
+            <div class="w-full bg-surface-container-high rounded-full h-2">
+              <div class="bg-primary h-2 rounded-full" [style.width.%]="cat.percent"></div>
+            </div>
+            <span class="text-xs text-on-surface-variant">{{ cat.amount | number }} FCFA</span>
+          </div>
+        } @empty {
+          <p class="text-on-surface-variant italic text-sm">Aucune catégorie.</p>
+        }
+      </div>
+    </div>
+
+    <!-- Top employés -->
+    <div class="col-span-12 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div class="p-6 border-b border-outline-variant">
+        <h4 class="font-headline-sm text-headline-sm text-primary">Top employés par dépenses</h4>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="bg-surface-container-low">
+              <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase">Employé</th>
+              <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase">Service</th>
+              <th class="px-6 py-4 font-label-md text-on-surface-variant uppercase text-right">Montant total</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant">
+            @for (emp of topEmployees(); track emp.name) {
+              <tr class="hover:bg-surface-container-low transition-colors">
+                <td class="px-6 py-4 font-bold text-primary">{{ emp.name }}</td>
+                <td class="px-6 py-4 text-body-md">{{ emp.department }}</td>
+                <td class="px-6 py-4 text-right font-bold text-primary">{{ emp.total | number }} FCFA</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="px-6 py-8 text-center text-on-surface-variant italic">Aucun employé.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,425 @@
+<!DOCTYPE html><html class="light" lang="fr"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>IDS Expense Management - Dashboard</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#191c1d",
+                        "background": "#f8f9fa",
+                        "secondary-fixed": "#c1e8ff",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#87d6fe",
+                        "on-background": "#191c1d",
+                        "surface-bright": "#f8f9fa",
+                        "outline-variant": "#c3c6cf",
+                        "primary-container": "#1a3c5e",
+                        "on-secondary-fixed": "#001e2b",
+                        "surface-variant": "#e1e3e4",
+                        "surface-tint": "#416084",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#87a7ce",
+                        "secondary-fixed-dim": "#81d0f8",
+                        "inverse-on-surface": "#f0f1f2",
+                        "inverse-surface": "#2e3132",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#005d7c",
+                        "on-tertiary-fixed": "#281800",
+                        "surface-container-highest": "#e1e3e4",
+                        "secondary": "#006687",
+                        "on-primary": "#ffffff",
+                        "surface-container-high": "#e7e8e9",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#513500",
+                        "primary-fixed-dim": "#a9c9f2",
+                        "on-tertiary-fixed-variant": "#5f410b",
+                        "surface": "#f8f9fa",
+                        "tertiary-fixed": "#ffddb0",
+                        "surface-container-low": "#f3f4f5",
+                        "outline": "#73777f",
+                        "primary-fixed": "#d1e4ff",
+                        "on-primary-fixed-variant": "#28496b",
+                        "on-surface-variant": "#43474e",
+                        "tertiary-fixed-dim": "#ecbf7e",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#edeeef",
+                        "tertiary": "#352100",
+                        "on-tertiary-container": "#c79e60",
+                        "error": "#ba1a1a",
+                        "surface-dim": "#d9dadb",
+                        "inverse-primary": "#a9c9f2",
+                        "on-secondary-fixed-variant": "#004d67",
+                        "primary": "#002645",
+                        "on-primary-fixed": "#001d36"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "card-gap": "20px",
+                        "container-padding": "24px",
+                        "sidebar-width": "280px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(8px); }
+    </style>
+</head>
+<body class="bg-background text-on-surface overflow-x-hidden" data-mode="connect">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-primary dark:bg-primary-container flex flex-col py-8 z-50 shadow-lg sidebar-transition" id="sidebar">
+<div class="px-6 mb-10 flex flex-col gap-1"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfoCDUE9y0WU47CVsPGahrNX9AhzQu7ish9Ewj7R3M26cYswsSgG8U3GXR4sm_wMweiZLnmai6TzvGoJot21noLVIAJBjWegopJAPtkCbSAlUFRyjrCoOVwnZBBWuxIS2QXRMVz8F6QHB8i5jOS_gEiXoDWEZ8p949ffvpgELcyRiOB4U25HZ51aS9ENeZfIRzjnhE3QKnW8L46C-DdfA0MNchsNbtQZW5Ato03K6s7oFfBE8NnUfGrVkryvDNvAS5hDW6rUoSjhWi" alt="IDS Technologie Logo" class="h-14 w-auto object-contain"></div>
+<nav class="flex-grow">
+<ul class="space-y-1">
+<!-- Tableau de bord: Active -->
+<li class="">
+<a class="flex items-center gap-4 px-6 py-3 border-l-4 border-secondary-container bg-primary-container text-on-primary-container transition-transform active:scale-98" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Tableau de bord</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="font-label-md text-label-md">Nouvelle dépense</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-md text-label-md">Mes rapports</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">policy</span>
+<span class="font-label-md text-label-md">Politiques</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-md text-label-md">Analyses</span>
+</a>
+</li>
+</ul>
+</nav>
+<div class="px-6 py-4">
+<button class="w-full bg-secondary text-on-secondary py-3 px-4 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                Create New Report
+            </button>
+</div>
+<div class="mt-auto border-t border-on-primary/10 pt-4">
+<ul class="space-y-1">
+<li class="">
+<a class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Paramètres</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md text-label-md">Déconnexion</span>
+</a>
+</li>
+</ul>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-sidebar-width min-h-screen flex flex-col transition-all duration-300">
+<!-- Top Navigation -->
+<header class="flex justify-between items-center h-16 px-container-padding w-full sticky top-0 z-40 bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none">
+<div class="flex items-center gap-6">
+<img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfoCDUE9y0WU47CVsPGahrNX9AhzQu7ish9Ewj7R3M26cYswsSgG8U3GXR4sm_wMweiZLnmai6TzvGoJot21noLVIAJBjWegopJAPtkCbSAlUFRyjrCoOVwnZBBWuxIS2QXRMVz8F6QHB8i5jOS_gEiXoDWEZ8p949ffvpgELcyRiOB4U25HZ51aS9ENeZfIRzjnhE3QKnW8L46C-DdfA0MNchsNbtQZW5Ato03K6s7oFfBE8NnUfGrVkryvDNvAS5hDW6rUoSjhWi" alt="IDS Logo" class="h-10 w-auto object-contain">
+<div class="hidden md:flex items-center bg-surface-container-low px-4 py-1.5 rounded-full border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-64 ml-2" placeholder="Rechercher..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors active:opacity-80 active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors active:opacity-80 active:scale-95">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors active:opacity-80 active:scale-95">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<div class="font-label-md text-label-md text-on-surface">Jean Dupont</div>
+<div class="text-[10px] text-on-surface-variant">Comptable Senior</div>
+</div>
+<img alt="User avatar" class="w-10 h-10 rounded-full border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9FLKNNV9gycqdJLuvqj-3YsVsNGGHcRKwLNpIVKOVL9WPJul9kyn-_Yja-MlS1wNsYJvPk1DmBfECOd7B_f9xJKuetpVD3XJXF8HFq2-OvPnzmFCxbZ99Qn3x9vCnpw2naKtjLRkhmt78TkmmFth8kpZwITdxrXYOrUmjV1wt_w9uQxAHrR9DQZIXRdfPpSk4ZZzq8OFu5QiTG_Tg7XAg5P83zk5QGw18_npKbmnfb4-IIHuy7Lb3dF_CHFM4uf96HAMwAGkGPLYm">
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="p-container-padding space-y-6">
+<!-- KPI Section -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- KPI Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-primary/5 rounded-lg">
+<span class="material-symbols-outlined text-primary">send</span>
+</div>
+<div class="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span class="text-label-md">12%</span>
+</div>
+</div>
+<div class="text-on-surface-variant font-label-md text-label-md mb-1 uppercase tracking-wider">Total Soumis</div>
+<div class="text-primary font-headline-md text-headline-md">1.250.000 <span class="text-body-md font-normal">FCFA</span></div>
+</div>
+<!-- KPI Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-secondary/5 rounded-lg">
+<span class="material-symbols-outlined text-secondary">hourglass_empty</span>
+</div>
+</div>
+<div class="text-on-surface-variant font-label-md text-label-md mb-1 uppercase tracking-wider">En Attente</div>
+<div class="text-secondary font-headline-md text-headline-md">450.000 <span class="text-body-md font-normal">FCFA</span></div>
+</div>
+<!-- KPI Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-tertiary-container/10 rounded-lg">
+<span class="material-symbols-outlined text-tertiary-container">verified</span>
+</div>
+</div>
+<div class="text-on-surface-variant font-label-md text-label-md mb-1 uppercase tracking-wider">Approuvé ce mois</div>
+<div class="text-primary font-headline-md text-headline-md">800.000 <span class="text-body-md font-normal">FCFA</span></div>
+</div>
+<!-- KPI Card 4 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-primary-container/10 rounded-lg">
+<span class="material-symbols-outlined text-primary-container">account_balance_wallet</span>
+</div>
+</div>
+<div class="text-on-surface-variant font-label-md text-label-md mb-1 uppercase tracking-wider">Total Remboursé</div>
+<div class="text-primary font-headline-md text-headline-md">3.200.000 <span class="text-body-md font-normal">FCFA</span></div>
+</div>
+</section>
+<!-- Main Grid: Recent Expenses & Category Chart -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left Column: Table -->
+<div class="lg:col-span-8 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm flex flex-col">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center">
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Dépenses Récentes</h2>
+<button class="text-primary font-label-md text-label-md hover:underline">Voir tout</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface-container-low">
+<tr>
+<th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase">Date</th>
+<th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase">Description</th>
+<th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase">Catégorie</th>
+<th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase">Montant</th>
+<th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase">Statut</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4 text-body-md">12/10/2023</td>
+<td class="px-6 py-4 text-body-md font-semibold">Billet d'avion - Dakar</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant rounded-full text-[11px] font-bold">Voyage</span>
+</td>
+<td class="px-6 py-4 text-body-md">450.000 FCFA</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-[11px] font-bold uppercase">Soumis</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4 text-body-md">11/10/2023</td>
+<td class="px-6 py-4 text-body-md font-semibold">Déjeuner Client - Pullman</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-full text-[11px] font-bold">Repas</span>
+</td>
+<td class="px-6 py-4 text-body-md">25.000 FCFA</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[11px] font-bold uppercase">Approuvé</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4 text-body-md">10/10/2023</td>
+<td class="px-6 py-4 text-body-md font-semibold">Fournitures bureau Oct.</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant rounded-full text-[11px] font-bold">Fournitures</span>
+</td>
+<td class="px-6 py-4 text-body-md">12.500 FCFA</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-[11px] font-bold uppercase">Brouillon</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4 text-body-md">08/10/2023</td>
+<td class="px-6 py-4 text-body-md font-semibold">Réparation Imprimante</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-surface-variant text-on-surface-variant rounded-full text-[11px] font-bold">Autre</span>
+</td>
+<td class="px-6 py-4 text-body-md">85.000 FCFA</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-[11px] font-bold uppercase">Rejeté</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Right Column: Donut Chart -->
+<div class="lg:col-span-4 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 flex flex-col">
+<h2 class="text-headline-sm font-headline-sm text-on-surface mb-6">Dépenses par Catégorie</h2>
+<div class="flex-grow flex flex-col items-center justify-center space-y-6">
+<!-- Abstract Visual Representative of Donut Chart -->
+<div class="relative w-48 h-48 rounded-full border-[12px] border-primary-container flex items-center justify-center">
+<div class="absolute inset-0 rounded-full border-[12px] border-secondary border-l-transparent border-t-transparent border-r-transparent rotate-45"></div>
+<div class="absolute inset-0 rounded-full border-[12px] border-tertiary-container border-l-transparent border-b-transparent border-r-transparent -rotate-12"></div>
+<div class="text-center">
+<div class="text-headline-sm font-headline-sm text-primary">60%</div>
+<div class="text-label-md text-on-surface-variant">Voyage</div>
+</div>
+</div>
+<div class="w-full space-y-3">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary-container"></div>
+<span class="text-body-md">Voyage</span>
+</div>
+<span class="font-bold text-body-md text-primary">60%</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-secondary"></div>
+<span class="text-body-md">Repas</span>
+</div>
+<span class="font-bold text-body-md text-primary">25%</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-tertiary-container"></div>
+<span class="text-body-md">Fournitures</span>
+</div>
+<span class="font-bold text-body-md text-primary">10%</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-surface-variant"></div>
+<span class="text-body-md">Autre</span>
+</div>
+<span class="font-bold text-body-md text-primary">5%</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Section: Monthly Trend Line Chart -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6">
+<div class="flex justify-between items-center mb-8">
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Tendance Mensuelle (FCFA)</h2>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="text-label-md">Dépenses 2023</span>
+</div>
+<div class="flex items-center gap-1.5 opacity-40">
+<div class="w-3 h-3 rounded-full bg-outline"></div>
+<span class="text-label-md">Dépenses 2022</span>
+</div>
+</div>
+</div>
+<!-- Abstract Graph Container -->
+<div class="relative h-[250px] w-full mt-4">
+<!-- Grid Lines -->
+<div class="absolute inset-0 flex flex-col justify-between">
+<div class="border-t border-outline-variant w-full h-[1px]"></div>
+<div class="border-t border-outline-variant w-full h-[1px]"></div>
+<div class="border-t border-outline-variant w-full h-[1px]"></div>
+<div class="border-t border-outline-variant w-full h-[1px]"></div>
+<div class="border-t border-outline-variant w-full h-[1px]"></div>
+</div>
+<!-- Decorative Chart Line -->
+<svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 1000 250">
+<path d="M0,200 L166,150 L333,180 L500,80 L666,110 L833,60 L1000,40" fill="none" stroke="#002645" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+<path class="fill-primary/5" d="M0,200 L166,150 L333,180 L500,80 L666,110 L833,60 L1000,40 L1000,250 L0,250 Z"></path>
+</svg>
+<!-- X-Axis Labels -->
+<div class="absolute -bottom-8 left-0 w-full flex justify-between px-2">
+<span class="text-label-md text-on-surface-variant">Mai</span>
+<span class="text-label-md text-on-surface-variant">Juin</span>
+<span class="text-label-md text-on-surface-variant">Juil</span>
+<span class="text-label-md text-on-surface-variant">Août</span>
+<span class="text-label-md text-on-surface-variant">Sept</span>
+<span class="text-label-md text-on-surface-variant">Oct</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer / Copyright -->
+<footer class="mt-auto p-container-padding text-center border-t border-outline-variant bg-surface-container-low">
+<p class="text-label-md text-on-surface-variant">© 2023 IDS Expense Management - Tous droits réservés.</p>
+</footer>
+</main>
+<!-- Floating Action Button (FAB) -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-secondary-container text-on-secondary-container rounded-2xl shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
+<span class="material-symbols-outlined text-[32px]">add</span>
+<span class="absolute right-16 bg-primary text-on-primary px-4 py-2 rounded-lg text-label-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">Nouvelle Note de Frais</span>
+</button>
+<script>
+        // Simple Interaction: Tooltip toggle logic could go here
+        console.log("IDS Dashboard Loaded successfully.");
+    </script>
+
+
+</body></html>

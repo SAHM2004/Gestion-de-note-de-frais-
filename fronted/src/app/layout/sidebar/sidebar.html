@@ -1,0 +1,83 @@
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-primary flex flex-col py-8 z-50 shadow-lg sidebar-transition" id="sidebar">
+    <div class="px-6 mb-10 flex flex-col gap-1">
+        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfoCDUE9y0WU47CVsPGahrNX9AhzQu7ish9Ewj7R3M26cYswsSgG8U3GXR4sm_wMweiZLnmai6TzvGoJot21noLVIAJBjWegopJAPtkCbSAlUFRyjrCoOVwnZBBWuxIS2QXRMVz8F6QHB8i5jOS_gEiXoDWEZ8p949ffvpgELcyRiOB4U25HZ51aS9ENeZfIRzjnhE3QKnW8L46C-DdfA0MNchsNbtQZW5Ato03K6s7oFfBE8NnUfGrVkryvDNvAS5hDW6rUoSjhWi" alt="IDS Technologie Logo" class="h-14 w-auto object-contain">
+    </div>
+    <nav class="flex-grow">
+        <ul class="space-y-1">
+            <!-- Menu Administrateur -->
+            @if (authService.userRole() === RoleType.ADMIN) {
+                <li>
+                    <a routerLink="/dashboard" routerLinkActive="border-l-4 border-secondary-container bg-primary-container text-on-primary-container" [routerLinkActiveOptions]="{exact: true}" class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span class="font-label-md text-label-md">Tableau de bord</span>
+                    </a>
+                </li>
+                <li>
+                    <a routerLink="/admin/users" routerLinkActive="border-l-4 border-secondary-container bg-primary-container text-on-primary-container" class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200">
+                        <span class="material-symbols-outlined">group</span>
+                        <span class="font-label-md text-label-md">Utilisateurs</span>
+                    </a>
+                </li>
+                <li>
+                    <a routerLink="/admin/departments" routerLinkActive="border-l-4 border-secondary-container bg-primary-container text-on-primary-container" class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200">
+                        <span class="material-symbols-outlined">corporate_fare</span>
+                        <span class="font-label-md text-label-md">Départements</span>
+                    </a>
+                </li>
+                <li>
+                    <a routerLink="/admin/categories" routerLinkActive="border-l-4 border-secondary-container bg-primary-container text-on-primary-container" class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200">
+                        <span class="material-symbols-outlined">category</span>
+                        <span class="font-label-md text-label-md">Catégories</span>
+                    </a>
+                </li>
+            } @else {
+                <li>
+                    <a routerLink="/dashboard" routerLinkActive="border-l-4 border-secondary-container bg-primary-container text-on-primary-container" [routerLinkActiveOptions]="{exact: true}" class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span class="font-label-md text-label-md">Tableau de bord</span>
+                    </a>
+                </li>
+                <li>
+                    <a routerLink="/expenses/list" routerLinkActive="border-l-4 border-secondary-container bg-primary-container text-on-primary-container" class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200">
+                        <span class="material-symbols-outlined">list_alt</span>
+                        <span class="font-label-md text-label-md">Mes dépenses</span>
+                    </a>
+                </li>
+                <li>
+                    <a routerLink="/expenses/new" routerLinkActive="border-l-4 border-secondary-container bg-primary-container text-on-primary-container" class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        <span class="font-label-md text-label-md">Nouvelle dépense</span>
+                    </a>
+                </li>
+                @if (authService.hasRole([RoleType.MANAGER, RoleType.TECHNICAL_DIRECTOR, RoleType.GENERAL_DIRECTOR, RoleType.ACCOUNTANT])) {
+                    <li>
+                        <a routerLink="/approvals" routerLinkActive="border-l-4 border-secondary-container bg-primary-container text-on-primary-container" class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200">
+                            <span class="material-symbols-outlined">fact_check</span>
+                            <span class="font-label-md text-label-md">Approbations</span>
+                        </a>
+                    </li>
+                }
+                @if (authService.hasRole([RoleType.MANAGER, RoleType.TECHNICAL_DIRECTOR, RoleType.GENERAL_DIRECTOR, RoleType.ACCOUNTANT])) {
+                    <li>
+                        <a routerLink="/analytics" routerLinkActive="border-l-4 border-secondary-container bg-primary-container text-on-primary-container" class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200">
+                            <span class="material-symbols-outlined">analytics</span>
+                            <span class="font-label-md text-label-md">Analyses</span>
+                        </a>
+                    </li>
+                }
+            }
+        </ul>
+    </nav>
+
+    <div class="mt-auto border-t border-on-primary/10 pt-4">
+        <ul class="space-y-1">
+            <li>
+                <button (click)="logout()" class="w-full flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all text-left">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span class="font-label-md text-label-md">Déconnexion</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+</aside>

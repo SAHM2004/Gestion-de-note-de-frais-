@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#006687",
+                    "on-secondary-container": "#005d7c",
+                    "error": "#ba1a1a",
+                    "background": "#f8f9fa",
+                    "inverse-surface": "#2e3132",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#e7e8e9",
+                    "surface-dim": "#d9dadb",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-surface": "#191c1d",
+                    "secondary-fixed-dim": "#81d0f8",
+                    "tertiary-container": "#513500",
+                    "on-primary-fixed-variant": "#28496b",
+                    "on-secondary-fixed-variant": "#004d67",
+                    "tertiary-fixed": "#ffddb0",
+                    "secondary-fixed": "#c1e8ff",
+                    "primary-fixed": "#d1e4ff",
+                    "surface-tint": "#416084",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed": "#001d36",
+                    "outline": "#73777f",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface-container-low": "#f3f4f5",
+                    "primary-container": "#1a3c5e",
+                    "inverse-primary": "#a9c9f2",
+                    "primary": "#002645",
+                    "surface-container": "#edeeef",
+                    "secondary-container": "#87d6fe",
+                    "on-tertiary-fixed-variant": "#5f410b",
+                    "on-secondary-fixed": "#001e2b",
+                    "on-surface-variant": "#43474e",
+                    "surface-variant": "#e1e3e4",
+                    "surface-bright": "#f8f9fa",
+                    "tertiary": "#352100",
+                    "on-error-container": "#93000a",
+                    "on-primary-container": "#87a7ce",
+                    "on-background": "#191c1d",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed-dim": "#ecbf7e",
+                    "on-tertiary-container": "#c79e60",
+                    "outline-variant": "#c3c6cf",
+                    "on-secondary": "#ffffff",
+                    "surface": "#f8f9fa",
+                    "primary-fixed-dim": "#a9c9f2",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed": "#281800",
+                    "on-error": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "container-padding": "24px",
+                    "base": "8px",
+                    "sidebar-width": "280px",
+                    "card-gap": "20px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .sidebar-active {
+            border-left: 4px solid #81d0f8;
+            background-color: #28496b;
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #DEE2E6;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-surface">
+<!-- Main Sidebar -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-primary text-on-primary shadow-sm border-r border-outline-variant flex flex-col py-4 z-50">
+<div class="px-6 mb-8 flex items-center gap-3">
+<img alt="IDS Technologie Logo" class="h-10 object-contain brightness-0 invert" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAN8UcAYfenRTMX2o1i5pISDgeA4JW0--s4W4rW5IjyTxis5IIPhSQ4UxhxHHogTS5Pyr1vhrAml7fiq0Xe3Czu1xbGjWf14T9k1J7V0iXFkpii39Hdth6cEPtnWZ9w4GwpJB4p4Ud52h8I0NfgnBizXDXD51gMr7dWrBg_P5TWUADUdyr7yfHVedeSAzildpEOzK9weUAEe5QkSmPI9uhcv1rEODiXGBGUiYYPbPXTwhCKG_LNLMKFHX87p5Ya1lkTqtSmzjpfSXTZ"/>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-primary leading-tight">Odoo</h1>
+<p class="font-label-md text-label-md opacity-70">Expenses</p>
+</div>
+</div>
+<div class="px-4 mb-10">
+<div class="flex items-center gap-3 bg-on-primary-fixed-variant/20 p-3 rounded-lg">
+<img class="w-10 h-10 rounded-full border-2 border-secondary-fixed-dim" data-alt="A professional headshot of a middle-aged male technical director with short dark hair, wearing a navy blue blazer and a crisp white shirt. He has a confident and approachable expression, set against a soft-focus office background with modern industrial elements. The lighting is warm and professional, emphasizing a corporate leadership aesthetic with balanced shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBC3tibBs0RFSGECElqDAi1-X5XO_bTvdE6zsp23rhaDPgTzv7lHYoXAIZfEDvxS8UIcv7LmqBJtDp5SVeK2lA5SOSKOkWQblQazdCIIxd0dYveoOtzmyejXVewhrwVsV_JPaVnbMmWCk3yh3WMLC7zS6Bjhsuwjj7ZebC--ciIYhIPY4TDwFTrv63Ald9TA6WmPutWaw456wJfE1N9fzcs8W2vLW9TUZUo0ItqgqD5-y-FQrXPFQVe6SK3oh6fZWag-YTB7jin2q8x"/>
+<div>
+<p class="font-label-md text-on-primary font-bold">Jean-Marc T.</p>
+<p class="text-[10px] opacity-70 uppercase tracking-wider">Directeur Technique</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-2 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-primary/70 hover:text-on-primary hover:bg-on-primary-fixed-variant/50 transition-colors rounded-r-md" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Tableau de bord</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-primary/70 hover:text-on-primary hover:bg-on-primary-fixed-variant/50 transition-colors rounded-r-md" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-body-md">Mes Dépenses</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 sidebar-active transition-colors rounded-r-md" href="#">
+<span class="material-symbols-outlined">rule</span>
+<span class="font-body-md">À Approuver</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-primary/70 hover:text-on-primary hover:bg-on-primary-fixed-variant/50 transition-colors rounded-r-md" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="font-body-md">Comptabilité</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-primary/70 hover:text-on-primary hover:bg-on-primary-fixed-variant/50 transition-colors rounded-r-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Configuration</span>
+</a>
+</nav>
+<div class="px-2 mt-auto">
+<button class="w-full flex items-center gap-3 px-4 py-3 text-on-primary/70 hover:text-error transition-colors rounded-r-md">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-body-md">Déconnexion</span>
+</button>
+</div>
+</aside>
+<!-- Top AppBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-280px)] h-16 bg-surface border-b border-outline-variant flex items-center justify-between px-container-padding z-40">
+<div class="flex items-center gap-8">
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant text-sm">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-body-md w-64 focus:ring-2 focus:ring-primary" placeholder="Rechercher une dépense..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<a class="text-primary border-b-2 border-primary pb-1 font-label-md" href="#">Analyses</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-md" href="#">Rapports</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container transition-colors rounded-full relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container transition-colors rounded-full">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container transition-colors rounded-full">
+<span class="material-symbols-outlined">apps</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-sidebar-width pt-16 h-screen flex flex-col overflow-hidden">
+<!-- Workflow Progress Bar -->
+<div class="bg-surface-container-lowest px-container-padding py-4 border-b border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">pending_actions</span>
+<h2 class="font-headline-sm text-headline-sm text-primary">Validation Technique</h2>
+</div>
+<nav class="flex items-center">
+<div class="flex items-center">
+<div class="flex items-center gap-2 px-4 py-2 text-on-surface-variant font-label-md opacity-60">
+<span class="material-symbols-outlined !text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Soumis
+                    </div>
+<div class="h-px w-8 bg-outline-variant"></div>
+<div class="flex items-center gap-2 px-4 py-2 text-on-surface-variant font-label-md opacity-60">
+<span class="material-symbols-outlined !text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Chef de Service
+                    </div>
+<div class="h-px w-8 bg-primary"></div>
+<div class="flex items-center gap-2 px-6 py-2 bg-primary-container text-on-primary-container font-label-md rounded-full shadow-sm">
+<span class="material-symbols-outlined !text-sm">analytics</span>
+                        Directeur Technique
+                    </div>
+<div class="h-px w-8 bg-outline-variant"></div>
+<div class="flex items-center gap-2 px-4 py-2 text-on-surface-variant font-label-md opacity-40">
+<span class="material-symbols-outlined !text-sm">account_balance</span>
+                        Comptabilité
+                    </div>
+</div>
+</nav>
+</div>
+<!-- Split View Content -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Left Panel: List -->
+<section class="w-[400px] bg-surface-container-lowest border-r border-outline-variant overflow-y-auto custom-scrollbar">
+<div class="p-4 bg-surface-container-low/50 sticky top-0 z-10 flex justify-between items-center">
+<span class="font-label-md text-on-surface-variant">3 RAPPORTS EN ATTENTE</span>
+<button class="p-1 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined">filter_list</span></button>
+</div>
+<!-- Active Card -->
+<div class="p-4 bg-secondary-container/10 border-l-4 border-secondary border-b border-outline-variant cursor-pointer">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-sm text-[16px] text-primary">Achat Serveur Cloud</h3>
+<span class="bg-error/10 text-error px-2 py-1 rounded font-label-md text-[10px]">CRITIQUE</span>
+</div>
+<div class="flex justify-between items-center mb-3">
+<p class="font-body-md text-on-surface-variant">Bakary Keita</p>
+<p class="font-bold text-primary">1.200.000 FCFA</p>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant opacity-60 text-[12px]">
+<span class="material-symbols-outlined !text-[14px]">calendar_today</span>
+<span>12 Oct 2023</span>
+</div>
+</div>
+<!-- Inactive Cards -->
+<div class="p-4 hover:bg-surface-container-low transition-colors border-b border-outline-variant cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-sm text-[16px] text-on-surface group-hover:text-primary">Licences Logiciels</h3>
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant px-2 py-1 rounded font-label-md text-[10px]">URGENT</span>
+</div>
+<div class="flex justify-between items-center mb-3">
+<p class="font-body-md text-on-surface-variant">Fatou Sow</p>
+<p class="font-bold text-on-surface">450.000 FCFA</p>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant opacity-60 text-[12px]">
+<span class="material-symbols-outlined !text-[14px]">calendar_today</span>
+<span>14 Oct 2023</span>
+</div>
+</div>
+<div class="p-4 hover:bg-surface-container-low transition-colors border-b border-outline-variant cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-sm text-[16px] text-on-surface group-hover:text-primary">Déplacement Salon Tech</h3>
+<span class="bg-on-primary-fixed-variant/10 text-on-primary-fixed-variant px-2 py-1 rounded font-label-md text-[10px]">STANDARD</span>
+</div>
+<div class="flex justify-between items-center mb-3">
+<p class="font-body-md text-on-surface-variant">Moussa Diop</p>
+<p class="font-bold text-on-surface">85.000 FCFA</p>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant opacity-60 text-[12px]">
+<span class="material-symbols-outlined !text-[14px]">calendar_today</span>
+<span>15 Oct 2023</span>
+</div>
+</div>
+</section>
+<!-- Right Panel: Details -->
+<section class="flex-1 bg-background overflow-y-auto custom-scrollbar p- container-padding relative">
+<div class="max-w-4xl mx-auto space-y-6 pb-32 pt-6">
+<!-- Header Info -->
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary mb-2">Achat Serveur Cloud</h2>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<div class="flex items-center gap-2">
+<img class="w-8 h-8 rounded-full" data-alt="A detailed portrait of a young African professional male in a light blue button-down shirt. He is sitting in a brightly lit modern office with large windows. The mood is optimistic and professional, with a clean corporate aesthetic and high-key lighting that emphasizes clarity and openness. The depth of field is shallow, softly blurring the office background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuADCvs4xlEN-cEaj38LWx8XIGmjfYH786RMJu6sk9XVduv1nzl2ft8II4UaXkPtQuluAIk4csVAbAnWW-qPm08REs1lAqtO5d3hGRdlNpvoGWUC6PnE1D1E8mKWdJ9MfR8PtDYS7jToLyU7DsoB_Wah8-QOJ_yA61ZLemO1MwFjr604_k52rKT40fN6hMlIW-qAyJCpochf4vBGd0jHzFkslwqah-pBdA-tooWntGjL1giyszmfRjhdluY3H16bnVnWHpi7k0m2UGRW"/>
+<span class="font-label-md">Bakary Keita</span>
+</div>
+<span class="text-outline-variant">|</span>
+<span class="font-label-md uppercase tracking-widest">IT Infrastructure</span>
+<span class="text-outline-variant">|</span>
+<span class="font-label-md">REF: EXP-2023-089</span>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-md text-on-surface-variant">Montant Total</p>
+<p class="font-headline-lg text-headline-lg text-secondary">1.200.000 FCFA</p>
+</div>
+</div>
+<!-- Technical Alert -->
+<div class="bg-secondary-container/10 border border-secondary/30 rounded-xl p-4 flex gap-4">
+<span class="material-symbols-outlined text-secondary text-3xl">info</span>
+<div>
+<h4 class="font-headline-sm text-secondary mb-1">Justification Technique</h4>
+<p class="font-body-md text-on-surface-variant leading-relaxed">
+                                Mise à niveau urgente des ressources CPU et stockage pour supporter le nouveau portail client. Solution AWS Instances réservées pour optimiser les coûts sur 12 mois. Validation du Chef de Service déjà obtenue (J. Fall).
+                            </p>
+</div>
+</div>
+<!-- Line Items Table -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="px-6 py-4 font-label-md text-on-surface-variant">DESCRIPTION</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant">CATÉGORIE</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant">QUANTITÉ</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant text-right">MONTANT</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container/50">
+<td class="px-6 py-4 font-body-md">AWS EC2 m5.xlarge (Annual Reservation)</td>
+<td class="px-6 py-4"><span class="bg-primary/5 text-primary px-3 py-1 rounded-full text-[12px]">Cloud Services</span></td>
+<td class="px-6 py-4 font-body-md">2 Units</td>
+<td class="px-6 py-4 font-bold text-right">850.000 FCFA</td>
+</tr>
+<tr class="hover:bg-surface-container/50">
+<td class="px-6 py-4 font-body-md">S3 Storage Tiering (5TB)</td>
+<td class="px-6 py-4"><span class="bg-primary/5 text-primary px-3 py-1 rounded-full text-[12px]">Infrastructure</span></td>
+<td class="px-6 py-4 font-body-md">1 Unit</td>
+<td class="px-6 py-4 font-bold text-right">250.000 FCFA</td>
+</tr>
+<tr class="hover:bg-surface-container/50">
+<td class="px-6 py-4 font-body-md">Maintenance &amp; Support Premium</td>
+<td class="px-6 py-4"><span class="bg-primary/5 text-primary px-3 py-1 rounded-full text-[12px]">Services</span></td>
+<td class="px-6 py-4 font-body-md">1 Unit</td>
+<td class="px-6 py-4 font-bold text-right">100.000 FCFA</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Attachments -->
+<div class="space-y-3">
+<h4 class="font-headline-sm text-primary">Justificatifs &amp; Pièces Jointes</h4>
+<div class="grid grid-cols-2 gap-4">
+<div class="border border-outline-variant p-4 rounded-xl flex items-center justify-between hover:bg-surface-container-low cursor-pointer transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-error/10 text-error flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined">picture_as_pdf</span>
+</div>
+<div>
+<p class="font-body-md font-semibold">Devis_AWS_IDS_2023.pdf</p>
+<p class="text-[10px] opacity-60">1.4 MB • 12 Oct 2023</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">download</span>
+</div>
+<div class="border border-outline-variant p-4 rounded-xl flex items-center justify-between hover:bg-surface-container-low cursor-pointer transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-secondary/10 text-secondary flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined">image</span>
+</div>
+<div>
+<p class="font-body-md font-semibold">Dashboard_Monitoring.jpg</p>
+<p class="text-[10px] opacity-60">2.1 MB • 11 Oct 2023</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">download</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Sticky Actions -->
+<div class="fixed bottom-0 right-0 w-[calc(100%-680px)] xl:w-[calc(100%-280px)] bg-surface-container-lowest border-t border-outline-variant p-6 flex justify-between items-center z-30">
+<div class="flex gap-4">
+<button class="px-8 py-3 bg-primary text-on-primary font-bold rounded-lg shadow-sm hover:opacity-90 active:scale-[0.98] transition-all flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check</span>
+                            Approuver
+                        </button>
+<button class="px-6 py-3 border-2 border-outline-variant text-on-surface-variant font-bold rounded-lg hover:bg-surface-container transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">info</span>
+                            Demander des infos
+                        </button>
+</div>
+<button class="px-6 py-3 text-error font-bold border-2 border-transparent hover:border-error-container hover:bg-error-container/10 rounded-lg transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">close</span>
+                        Rejeter
+                    </button>
+</div>
+</section>
+</div>
+</main>
+<script>
+        // Micro-interaction for list item selection (Visual only)
+        document.querySelectorAll('section.w-\\[400px\\] > div').forEach(card => {
+            card.addEventListener('click', () => {
+                // In a real app, this would update state
+                console.log("Selected report: " + card.querySelector('h3').innerText);
+            });
+        });
+    </script>
+</body></html>

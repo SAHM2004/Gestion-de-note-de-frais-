@@ -1,0 +1,28 @@
+<!-- Top Navigation -->
+<header class="flex justify-between items-center h-16 px-6 w-full sticky top-0 z-40 bg-surface-container-lowest border-b border-outline-variant shadow-sm backdrop-blur-md bg-opacity-95">
+    <div class="flex items-center gap-4">
+        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfoCDUE9y0WU47CVsPGahrNX9AhzQu7ish9Ewj7R3M26cYswsSgG8U3GXR4sm_wMweiZLnmai6TzvGoJot21noLVIAJBjWegopJAPtkCbSAlUFRyjrCoOVwnZBBWuxIS2QXRMVz8F6QHB8i5jOS_gEiXoDWEZ8p949ffvpgELcyRiOB4U25HZ51aS9ENeZfIRzjnhE3QKnW8L46C-DdfA0MNchsNbtQZW5Ato03K6s7oFfBE8NnUfGrVkryvDNvAS5hDW6rUoSjhWi" alt="IDS Logo" class="h-10 w-auto object-contain hover:scale-105 transition-transform">
+    </div>
+    <div class="flex items-center gap-4">
+        <!-- Utilisateur connecté avec Avatar aux initiales -->
+        <div class="flex items-center gap-3 p-1.5 px-3 rounded-full bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/80 hover:shadow-sm transition-all group" (click)="goToProfile()" title="Mon profil">
+            <!-- Rond de l'Avatar avec Initiales (ex: SM) -->
+            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary via-indigo-600 to-indigo-700 text-white font-bold text-xs tracking-wider flex items-center justify-center shadow-sm border border-indigo-400/30 group-hover:scale-105 transition-transform">
+                {{ getInitials(authService.currentUser()?.name) }}
+            </div>
+            
+            <div class="text-left hidden sm:block pr-1">
+                <div class="text-xs font-bold text-slate-800 leading-tight group-hover:text-primary transition-colors">
+                    {{ authService.currentUser()?.name }}
+                </div>
+                <div class="text-[10px] font-medium text-slate-500 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                    {{ getRoleLabel(authService.userRole()!) }}
+                </div>
+            </div>
+
+            <span class="material-symbols-outlined text-slate-400 text-sm group-hover:translate-x-0.5 transition-transform">chevron_right</span>
+        </div>
+    </div>
+</header>
+

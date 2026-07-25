@@ -1,0 +1,14 @@
+# Root & IDE
+.vscode/
+.idea/
+*.class
+
+# Backend (Spring Boot)
+backend/target/
+backend/uploads/
+*.log
+
+# Frontend (Angular)
+fronted/node_modules/
+fronted/dist/
+fronted/.angular/

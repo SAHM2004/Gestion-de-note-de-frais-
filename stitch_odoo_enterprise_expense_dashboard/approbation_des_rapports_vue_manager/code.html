@@ -1,0 +1,392 @@
+<!DOCTYPE html><html class="light" lang="fr"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Odoo Expenses - Approbation Manager</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#e1e3e4",
+                        "surface-tint": "#416084",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#81d0f8",
+                        "on-primary-fixed": "#001d36",
+                        "secondary": "#006687",
+                        "outline-variant": "#c3c6cf",
+                        "on-tertiary-fixed-variant": "#5f410b",
+                        "inverse-primary": "#a9c9f2",
+                        "secondary-fixed": "#c1e8ff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#d1e4ff",
+                        "surface-container": "#edeeef",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#513500",
+                        "surface-container-high": "#e7e8e9",
+                        "tertiary-fixed": "#ffddb0",
+                        "tertiary-fixed-dim": "#ecbf7e",
+                        "on-secondary-container": "#005d7c",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "primary": "#002645",
+                        "surface-container-low": "#f3f4f5",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-tertiary-fixed": "#281800",
+                        "error": "#ba1a1a",
+                        "background": "#f8f9fa",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#f8f9fa",
+                        "surface": "#f8f9fa",
+                        "inverse-on-surface": "#f0f1f2",
+                        "primary-fixed-dim": "#a9c9f2",
+                        "primary-container": "#1a3c5e",
+                        "secondary-container": "#87d6fe",
+                        "outline": "#73777f",
+                        "on-tertiary-container": "#c79e60",
+                        "on-secondary-fixed": "#001e2b",
+                        "on-background": "#191c1d",
+                        "surface-dim": "#d9dadb",
+                        "on-primary-container": "#87a7ce",
+                        "on-primary-fixed-variant": "#28496b",
+                        "inverse-surface": "#2e3132",
+                        "on-surface-variant": "#43474e",
+                        "on-surface": "#191c1d",
+                        "on-secondary-fixed-variant": "#004d67",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#352100"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "card-gap": "20px",
+                        "sidebar-width": "280px",
+                        "base": "8px",
+                        "container-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .active-tab { border-left-width: 4px; border-color: #81d0f8; background-color: #28496b; color: #ffffff; font-weight: 700; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="overflow-hidden">
+<!-- Sidebar -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-primary dark:bg-primary-container text-on-primary dark:text-on-primary-container border-r border-outline-variant dark:border-outline shadow-sm flex flex-col py-4 z-50">
+<div class="px-6 mb-8">
+<img alt="IDS Technologie Logo" class="h-12 w-auto object-contain bg-white p-1 rounded" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7k-ldIBV-sYAFIQPUPq-RyZQo3jAWrsj2ZCOyfFVXd-S-nMJideFu32vveaA7_JvKEQkGg79uuBUhHYLEmHJpDaMI2lewYYiAikctSzU2NHARUjsYFwcfp73rArXT0oAVhzuIJv1rH3nMed5bag723OjOBU8xK2rIGcUBpVeCOHhdoo8QtIBijA24-Jy3pr5THSMEWys3oam2BdkMrzB6363IZ2SvOxVrxsgfdYyRQMSc1iRQa0OAkrU0VMuUTojdeKjiK1qB3HAg">
+</div>
+<nav class="flex-1 space-y-1">
+<div class="flex items-center px-6 py-3 text-on-primary/70 hover:bg-on-primary-fixed-variant/50 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined mr-3">dashboard</span>
+<span class="font-body-md text-body-md">Tableau de bord</span>
+</div>
+<div class="flex items-center px-6 py-3 text-on-primary/70 hover:bg-on-primary-fixed-variant/50 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined mr-3">receipt_long</span>
+<span class="font-body-md text-body-md">Mes Dépenses</span>
+</div>
+<div class="flex items-center px-6 py-3 border-l-4 border-secondary-fixed-dim bg-on-primary-fixed-variant text-on-primary font-bold cursor-pointer group">
+<span class="material-symbols-outlined mr-3">rule</span>
+<span class="font-body-md text-body-md">À Approuver</span>
+</div>
+<div class="flex items-center px-6 py-3 text-on-primary/70 hover:bg-on-primary-fixed-variant/50 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined mr-3">account_balance</span>
+<span class="font-body-md text-body-md">Comptabilité</span>
+</div>
+<div class="flex items-center px-6 py-3 text-on-primary/70 hover:bg-on-primary-fixed-variant/50 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined mr-3">settings</span>
+<span class="font-body-md text-body-md">Configuration</span>
+</div>
+</nav>
+<div class="px-6 pt-4 border-t border-white/10 mt-auto">
+<div class="flex items-center gap-3 mb-6">
+<img alt="Manager Avatar" class="w-10 h-10 rounded-full border-2 border-on-primary/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHu6SAHhhz7FsE2t_Auq23knJHsOnMPxtAVhmAf8p7SFDLqwHpnpKjPY9ZY87lrBLAuoYkfkRi3NP1UFb0YV7r_yNK4oFOxzIz0350Nb4Q6e5xNoio_yFtCQtlUW69nGF4ScGLHPy9m_XymyJyRjYHi3JLgQRW4cp0kQVooGpp9zmHtix3YVm9pUGlpeLZsem0AMH9Nb90Vw8iizhNoj-wMxTuMPse-ot3j6brIraKk8YEzqPTyQoJlM5j1QNpj166PeXpnzefDwzQ">
+<div>
+<p class="font-label-md text-label-md">Odoo Expenses</p>
+<p class="text-xs opacity-70">Gestionnaire</p>
+</div>
+</div>
+<div class="flex items-center text-on-primary/70 hover:text-on-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined mr-3">logout</span>
+<span class="font-body-md text-body-md">Déconnexion</span>
+</div>
+</div>
+</aside>
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 right-0 w-[calc(100%-280px)] h-16 bg-surface dark:bg-surface-dim border-b border-outline-variant flex items-center justify-between px-container-padding z-40">
+<div class="flex items-center gap-8"><div class="flex items-center gap-2">
+    <span class="material-symbols-outlined text-on-surface-variant cursor-pointer">menu</span>
+    <h1 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Note de frais / Marie Diouf</h1>
+</div>
+<div class="flex gap-2 ml-4">
+    <button class="px-3 py-1.5 bg-primary text-white text-sm font-semibold rounded hover:bg-primary/90 transition-colors">Sauvegarder</button>
+    <button class="px-3 py-1.5 border border-outline text-on-surface text-sm font-semibold rounded hover:bg-surface-container transition-colors">Annuler</button>
+</div></div>
+<div class="flex items-center gap-4"><div class="flex items-center gap-6">
+    <div class="flex items-center gap-4">
+        <span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">chat</span>
+        <span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">attach_file</span>
+        <div class="relative group">
+            <span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">notifications</span>
+            <span class="absolute -top-1 -right-1 bg-error text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">3</span>
+        </div>
+    </div>
+    <div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+        <img alt="Manager Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcpqlBBWKZme-ZyYjU4Ryg8G65ww2S6_Dz1kQbR508cgKcg6vHThtSAsf0kicjZu-j9VSlY9Ymc_Jxm-bjn2HvHW3rMuybPLyU2PGajC9Dr1TqrolLMKmdJ0q1fn7PqDS8q49OhgTJAhT-w-hotRylj1_HloPw0P6YBh-yy3Zeg30LjXR0hpVVjylRVAKMZHAt8rqL4IvZF3LO7BHhovU_yuES2v8yapf0qvprHxVkeRt6-beum4y3rbw4l4suQyFdB3P61jHboulp">
+    </div>
+</div></div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-sidebar-width mt-16 h-[calc(100vh-64px)] flex overflow-hidden">
+<!-- Left Panel: Pending Approvals List -->
+<section class="w-[400px] bg-white border-r border-outline-variant flex flex-col">
+<div class="p-6 border-b border-outline-variant flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm text-primary">En attente (12)</h2>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">filter_list</span>
+</div>
+<div class="flex-1 overflow-y-auto scrollbar-hide">
+<!-- List Item 1: Active -->
+<div class="p-4 border-b border-outline-variant bg-surface-container-low border-l-4 border-primary cursor-pointer transition-all">
+<div class="flex gap-4">
+<img alt="Employee" class="w-12 h-12 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHCkMNs-wlgMrG893QkdeS_1sbECjI77bad6uNzPPkxv5Tc2ABIH2J1cu5hoPeWQMGuuiykbBHxCTRny6JDuxgCo-356c-IiaAKI4gaDnyoIgnpnfq-k45ykIKnxxmD5k2PTXTTxf-lmBZ1rM2oknp8F0T_tnBbLbSr-tN-qTt02mNxBRaAHRPCkR4JjKROkbml68lnudKKEgUt6pRzqrE_L0e6GJIrVRa3ZyDmzOdyejFcu9cUC72lodhI5vnLvD2Iei1AibJ540E">
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h3 class="font-body-lg text-body-lg font-bold text-primary">Déplacement Dakar</h3>
+<span class="bg-error text-white text-[10px] px-2 py-0.5 rounded-full font-bold">7 jours</span>
+</div>
+<p class="text-sm text-on-surface-variant">Marie Diouf • Informatique</p>
+<div class="mt-2 flex justify-between items-center">
+<span class="font-headline-sm text-headline-sm text-primary">450.000 FCFA</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+<!-- List Item 2 -->
+<div class="p-4 border-b border-outline-variant hover:bg-surface-container-lowest cursor-pointer transition-all">
+<div class="flex gap-4">
+<img alt="Employee" class="w-12 h-12 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTvhytx00Tx3G0w99sClahbDg23L2Eyq948iWnTvtjPVnZ-hUB1FUIgu-7rwgO_ZjNlI6iTtU4bNdSFf2VqYGSnXWiaipuMniLiBRqNw8AhZsHLtShQ2sYX1wmpH31g8PhbuQ8xwtKdvUlW5bnxRqpOkpJn88JGcBWoD8nJRrxooI2FagqzYLLYICIdtYFdRx6mtVAS_D61-FZMKbAMkEemmHk2GF67HxKXYO2Oohdb1swjw2KMbeYANciFrwL2j0ErkXWS7G9Tup5">
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h3 class="font-body-lg text-body-lg font-bold text-primary">Repas Client - IDS</h3>
+<span class="bg-tertiary-container text-on-tertiary-container text-[10px] px-2 py-0.5 rounded-full font-bold">3 jours</span>
+</div>
+<p class="text-sm text-on-surface-variant">Omar Sy • Commercial</p>
+<div class="mt-2 flex justify-between items-center">
+<span class="font-headline-sm text-headline-sm text-primary">85.500 FCFA</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+<!-- List Item 3 -->
+<div class="p-4 border-b border-outline-variant hover:bg-surface-container-lowest cursor-pointer transition-all">
+<div class="flex gap-4">
+<img alt="Employee" class="w-12 h-12 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2CPwrEEg-CPiQlWkwG3CI4t6MIuSoCpcPkCIJdaUXjh0-CYwJkLuSan2ki6nB1ETx1QjzDC7BBkwyirHtIBwew7FFkHSD7j2pcuyLeSroWj5eyx3cBvJosMZOFxoG4WKvEZJ4FIdBzHpFPN_DNr3ZzoBVCFavd26c3qjIi9BSZ6MWCa-gpEwj419oN_5r1ijdW-MVLcRH79G2YN7dcSg__s6CE0VzqhOLlpVGmbiEJ-_26nkjynC16bw87Z9C8ELbr3-CIldB6Cls">
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h3 class="font-body-lg text-body-lg font-bold text-primary">Achat Petit Matériel</h3>
+<span class="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-bold">1 jour</span>
+</div>
+<p class="text-sm text-on-surface-variant">Aïcha Kane • RH</p>
+<div class="mt-2 flex justify-between items-center">
+<span class="font-headline-sm text-headline-sm text-primary">12.000 FCFA</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Panel: Report Details -->
+<section class="flex-1 bg-background flex flex-col relative overflow-y-auto">
+<!-- Approval Chain Progress Bar -->
+<div class="sticky top-0 bg-white p-6 shadow-sm z-30 border-b border-outline-variant"><div class="flex items-center justify-between px-8 py-3 bg-surface-container-low">
+    <div class="flex gap-1 items-center">
+        <span class="px-4 py-1 bg-primary text-white text-xs font-bold rounded-l-full">Brouillon</span>
+        <span class="px-4 py-1 bg-secondary-container text-on-secondary-container text-xs font-bold">En cours</span>
+        <span class="px-4 py-1 bg-surface-container-highest text-on-surface-variant text-xs font-bold">Approuvé</span>
+        <span class="px-4 py-1 bg-surface-container-highest text-on-surface-variant text-xs font-bold rounded-r-full">Comptabilisé</span>
+    </div>
+    <div class="flex gap-4">
+        <button class="flex items-center gap-1 text-sm text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-sm">print</span> Imprimer</button>
+        <button class="flex items-center gap-1 text-sm text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-sm">share</span> Partager</button>
+    </div>
+</div></div>
+<!-- Content Area -->
+<div class="p-8 space-y-8 max-w-5xl mx-auto w-full pb-32">
+<!-- Employee Info Card -->
+<div class="bg-white p-6 rounded-xl border border-outline-variant shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-6">
+<img alt="Marie Diouf" class="w-20 h-20 rounded-xl object-cover shadow-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLPcPw8Mn0yxA8QquP7a3YWjiPzlsrmqQvVLuIDX2UlpG0frG__FJUvPtznoZ8ac22nkhv3klGlKV5HYSxzHFaFMHokR584xWb-bT6lpF7GeR4fHOpcEctyf7QPaFu7toAYlD10OTZ-Pjut-rwzop_MPHUtRIxtcEI8TJtSyFN-2G7N2l7zsNq_L6YCAYY6O9dp4MASV_UioaSmaO2rt_V9vOFHlYgLAK3moo8phdhuvcruwHFXDdiZHCMEKcFT6G167ae4XGhiIuX">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Marie Diouf</h2>
+<p class="text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">badge</span> Consultant Informatique Senior
+                            </p>
+<p class="text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">corporate_fare</span> Département : Technologie &amp; Innovation
+                            </p>
+</div>
+</div>
+<div class="text-right">
+<div class="bg-primary/5 px-4 py-2 rounded-lg border border-primary/10">
+<p class="text-xs uppercase font-bold text-on-surface-variant mb-1">Total de la Note</p>
+<p class="font-headline-lg text-headline-lg text-primary">450.000 FCFA</p>
+</div>
+</div>
+</div>
+<!-- Compliance Bar -->
+<div class="flex items-center gap-4 bg-tertiary-container/10 p-4 rounded-lg border border-tertiary-container/20 bg-error-container/20 border-error-container/30">
+<span class="material-symbols-outlined text-on-tertiary-container">warning</span>
+<p class="text-error font-body-md text-body-md flex-1"><strong>Alerte de conformité :</strong> Le poste "Repas soir" (75.000 FCFA) dépasse le plafond de politique de l'entreprise fixé à 50.000 FCFA pour Dakar.</p>
+<button class="text-xs font-bold text-error underline uppercase hover:opacity-80">Voir la politique</button>
+</div>
+<!-- Expense Lines Table -->
+<div class="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low text-on-surface-variant">
+<tr>
+<th class="p-4 font-label-md text-label-md uppercase tracking-wider">Justificatif</th>
+<th class="p-4 font-label-md text-label-md uppercase tracking-wider">Description</th>
+<th class="p-4 font-label-md text-label-md uppercase tracking-wider">Catégorie</th>
+<th class="p-4 font-label-md text-label-md uppercase tracking-wider">Date</th>
+<th class="p-4 font-label-md text-label-md uppercase tracking-wider text-right">Montant</th>
+<th class="p-4 font-label-md text-label-md uppercase tracking-wider text-center">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Line 1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="p-4">
+<div class="w-12 h-12 rounded border border-outline-variant overflow-hidden cursor-zoom-in">
+<img class="w-full h-full object-cover" data-alt="A close-up photograph of a professional business receipt printed on thermal paper, showcasing various transaction details and numerical values. The lighting is bright and clear, highlighting the paper's texture against a minimalist white office background. The overall mood is organized and corporate, reflecting a clean and professional administrative environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrnzERNh369y8f_TdS4zdtzjEdLWUeLOO11NAo7ENnQjTt_dSpuOwqv1oBWIBzdK549qdcssBuPzzaP7h5v-hkixYS2GbGElil8JRLzKLqZggJbnm-1kmGWI4ExWDrAERsw51FLxUb5gQKZ-sL1l2KJojhezQjBVg9HHmD-L0vVbtuS4sXUY189QgaiSkNVRLeQBzN9v25WzcZUfB35-R_UIUUkTrIut6P4Orf6Hl_uzvfK0iZTATJ9PkxVT6k2RX0ZZKQ_h6pUZyj">
+</div>
+</td>
+<td class="p-4">
+<p class="font-bold text-primary">Billet Avion AIBD-Dakar</p>
+<p class="text-xs text-on-surface-variant">Air Sénégal - Business</p>
+</td>
+<td class="p-4 text-sm">Transport</td>
+<td class="p-4 text-sm">12/05/2024</td>
+<td class="p-4 text-right font-bold">250.000 FCFA</td>
+<td class="p-4 text-center">
+<span class="material-symbols-outlined text-green-500" title="Conforme">check_circle</span>
+</td>
+</tr>
+<!-- Line 2 -->
+<tr class="hover:bg-surface-container-lowest transition-colors bg-error/5">
+<td class="p-4">
+<div class="w-12 h-12 rounded border border-outline-variant overflow-hidden cursor-zoom-in">
+<img class="w-full h-full object-cover" data-alt="A detailed macro shot of a dinner receipt from a high-end restaurant, with clear typography and visible figures for a multi-course meal. The paper is slightly glossy under soft, warm ambient restaurant lighting. The image captures a sense of professional expense documentation in a corporate setting. The colors are muted and professional, emphasizing clarity and transparency." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAI6vSJnyfz7RB83WktAxqwKUDUS9gQsp0Bt7lbjsCzxmc1UVDreLJNTpoHhZbC3FZtkBYpQtkNDvYIYOvnexJcNn1THoBAWzzLDE-HTYIBweUbiYc6Emrfm4SVG8XaU1PTMR51IBVnCQ51jw-y_tj2JeaNp-91VwnVw36oAtQsIwHTHeIJdTuTcA4Ojj_GwwmHlqAhjDP3j7IUYpI_YBg6DPtjOsFClCgPn3chr5SreNr5iJtfnSPVlsGTPw0fKGeLQUmQRfHPQLgj">
+</div>
+</td>
+<td class="p-4">
+<p class="font-bold text-primary">Repas soir - Hôtel Terrou Bi</p>
+<p class="text-xs text-error font-semibold">Dépassement de plafond</p>
+</td>
+<td class="p-4 text-sm">Restauration</td>
+<td class="p-4 text-sm">13/05/2024</td>
+<td class="p-4 text-right font-bold">75.000 FCFA</td>
+<td class="p-4 text-center">
+<span class="material-symbols-outlined text-error" title="Hors Politique">warning</span>
+</td>
+</tr>
+<!-- Line 3 -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="p-4">
+<div class="w-12 h-12 rounded border border-outline-variant overflow-hidden cursor-zoom-in">
+<img class="w-full h-full object-cover" data-alt="A high-resolution photograph of a folded paper receipt placed on a clean, light-colored desk surface. The focus is sharp on the printed text and monetary symbols, symbolizing financial accuracy and record-keeping. The lighting is even and bright, creating a clean, modern aesthetic suitable for a high-end financial application. The mood is one of transparency and meticulousness." src="https://lh3.googleusercontent.com/aida-public/AB6AXuATbn_E_8S9qUXXF-C5wLaZWjWlhJ_DDhJOl6ha6ZYWel_D2bDi3-ClML56UxZvPgAAL6VbZ2_MJfHSuJ93y-q9UlVLebaAHX4WLPnpAJUcVvdKYF0lFMPegh_nSNKFtcX6ZBOlPXW1AmmsUiYmLd6fKYb4KU4bmYlV_1LiHvSpR3AnBcTzB4f4E78w42Ze-tkq1dVqoqt8iyqDLTAVE7W07EXT5lEKCAAFN5k5M--2irDlkl9Q87XzE4adRkC4Fx1eIi1Y17m2ZU5n">
+</div>
+</td>
+<td class="p-4">
+<p class="font-bold text-primary">Hébergement - 2 nuits</p>
+<p class="text-xs text-on-surface-variant">Radisson Blu Dakar</p>
+</td>
+<td class="p-4 text-sm">Hébergement</td>
+<td class="p-4 text-sm">12/05/2024</td>
+<td class="p-4 text-right font-bold">125.000 FCFA</td>
+<td class="p-4 text-center">
+<span class="material-symbols-outlined text-green-500" title="Conforme">check_circle</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Notes Section -->
+<div class="bg-white p-6 rounded-xl border border-outline-variant shadow-sm">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined">chat_bubble</span> Notes de l'employé
+                    </h3>
+<div class="p-4 bg-surface-container rounded-lg italic text-on-surface-variant text-body-md font-body-md border-l-4 border-outline">
+                        "Le repas du soir du 13/05 a été pris avec un prospect stratégique (M. Ndiaye de Sonatel). C'est pourquoi le montant dépasse le forfait habituel. Un rapport de visite a été déposé au CRM."
+                    </div>
+</div>
+</div>
+<!-- Bottom Action Bar -->
+<div class="fixed bottom-0 right-0 w-[calc(100%-280px)] bg-white border-t border-outline-variant p-4 px-8 flex justify-between items-center z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]"><div class="flex items-center gap-2">
+    <button class="bg-primary text-white font-semibold px-6 py-2 rounded shadow hover:bg-primary/90 transition-all">Approuver</button>
+    <button class="bg-white border border-outline text-on-surface font-semibold px-6 py-2 rounded hover:bg-surface-container transition-all">Refuser</button>
+    <button class="text-on-surface-variant font-semibold px-4 py-2 rounded hover:bg-surface-container transition-all">Remettre en brouillon</button>
+</div>
+<div class="flex items-center gap-4">
+    <div class="flex -space-x-2">
+        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLPcPw8Mn0yxA8QquP7a3YWjiPzlsrmqQvVLuIDX2UlpG0frG__FJUvPtznoZ8ac22nkhv3klGlKV5HYSxzHFaFMHokR584xWb-bT6lpF7GeR4fHOpcEctyf7QPaFu7toAYlD10OTZ-Pjut-rwzop_MPHUtRIxtcEI8TJtSyFN-2G7N2l7zsNq_L6YCAYY6O9dp4MASV_UioaSmaO2rt_V9vOFHlYgLAK3moo8phdhuvcruwHFXDdiZHCMEKcFT6G167ae4XGhiIuX" class="w-8 h-8 rounded-full border-2 border-white">
+        <div class="w-8 h-8 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[10px] font-bold">+2</div>
+    </div>
+    <span class="text-xs text-on-surface-variant">Dernière modification il y a 2h</span>
+</div></div>
+</section>
+</main>
+<!-- Floating Action Button for New Expense (Supressed per instructions on details screen, but standard on dashboard) -->
+<!-- Not rendered here to prioritize the Review Task canvas -->
+<script>
+        // Simple micro-interaction for list items
+        const listItems = document.querySelectorAll('.overflow-y-auto > div');
+        listItems.forEach(item => {
+            item.addEventListener('click', () => {
+                listItems.forEach(i => {
+                    i.classList.remove('bg-surface-container-low', 'border-l-4', 'border-primary');
+                    i.classList.add('hover:bg-surface-container-lowest');
+                });
+                item.classList.add('bg-surface-container-low', 'border-l-4', 'border-primary');
+                item.classList.remove('hover:bg-surface-container-lowest');
+            });
+        });
+    </script>
+
+
+</body></html>

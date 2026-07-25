@@ -1,0 +1,42 @@
+<div class="min-h-screen flex items-center justify-center bg-surface-container-lowest">
+  <div class="w-full max-w-md p-8 bg-surface dark:bg-surface-container rounded-2xl shadow-xl border border-outline-variant">
+    <div class="text-center mb-8">
+      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfoCDUE9y0WU47CVsPGahrNX9AhzQu7ish9Ewj7R3M26cYswsSgG8U3GXR4sm_wMweiZLnmai6TzvGoJot21noLVIAJBjWegopJAPtkCbSAlUFRyjrCoOVwnZBBWuxIS2QXRMVz8F6QHB8i5jOS_gEiXoDWEZ8p949ffvpgELcyRiOB4U25HZ51aS9ENeZfIRzjnhE3QKnW8L46C-DdfA0MNchsNbtQZW5Ato03K6s7oFfBE8NnUfGrVkryvDNvAS5hDW6rUoSjhWi" alt="IDS Logo" class="h-16 mx-auto mb-4">
+      <h1 class="text-headline-md font-bold text-on-surface">Bienvenue</h1>
+      <p class="text-body-md text-on-surface-variant mt-2">Connectez-vous pour gérer vos notes de frais</p>
+    </div>
+
+    @if (loginError()) {
+      <div class="mb-4 p-3 bg-error/10 text-error rounded-lg text-sm font-medium">
+        {{ loginError() }}
+      </div>
+    }
+
+    <form (ngSubmit)="onSubmit()" class="space-y-6">
+      <div>
+        <label for="email" class="block text-label-md font-medium text-on-surface mb-2">Adresse Email</label>
+        <input type="email" id="email" name="email" [(ngModel)]="email" class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary transition-all text-on-surface" placeholder="votre@email.com" required>
+      </div>
+
+      <div>
+        <label for="password" class="block text-label-md font-medium text-on-surface mb-2">Mot de passe</label>
+        <input type="password" id="password" name="password" [(ngModel)]="password" class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary transition-all text-on-surface" placeholder="••••••••" required>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <label class="flex items-center">
+          <input type="checkbox" class="rounded border-outline-variant text-primary focus:ring-primary">
+          <span class="ml-2 text-label-md text-on-surface-variant">Se souvenir de moi</span>
+        </label>
+        <a href="#" class="text-label-md text-primary hover:underline">Mot de passe oublié ?</a>
+      </div>
+
+      <button type="submit" class="w-full bg-primary text-on-primary py-3 rounded-xl font-label-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all active:scale-[0.98]">
+        Se connecter
+      </button>
+    </form>
+
+  </div>
+</div>
+
+

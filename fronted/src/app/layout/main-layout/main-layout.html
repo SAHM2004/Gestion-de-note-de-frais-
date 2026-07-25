@@ -1,0 +1,15 @@
+<app-sidebar></app-sidebar>
+<main class="ml-[280px] min-h-screen flex flex-col transition-all duration-300">
+    <app-header></app-header>
+    
+    <!-- Page Canvas -->
+    <div class="flex-grow">
+        <router-outlet></router-outlet>
+    </div>
+
+    <!-- Footer / Copyright -->
+    <footer class="mt-auto p-[24px] text-center border-t border-outline-variant bg-surface-container-low">
+        <p class="text-label-md text-on-surface-variant">© 2026 IDS Expense Management - Tous droits réservés.</p>
+    </footer>
+</main>
+
