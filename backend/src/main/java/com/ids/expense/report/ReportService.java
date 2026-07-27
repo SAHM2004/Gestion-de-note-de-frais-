@@ -13,8 +13,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -137,32 +139,56 @@ public class ReportService {
 
     public ByteArrayInputStream generateExpensesCsv(List<ExpenseReportResponse> reports) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-        try (PrintWriter writer = new PrintWriter(out);
-             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-                     .withHeader("ID Note", "Titre", "Employé", "Département", "Statut", "Devise", "Date Début", "Date Fin", "Montant Total"))) {
+        try {
+            // Write UTF-8 BOM for Microsoft Excel / Calc compatibility
+            out.write(0xEF);
+            out.write(0xBB);
+            out.write(0xBF);
 
-            for (ExpenseReportResponse report : reports) {
-                BigDecimal total = BigDecimal.ZERO;
-                if (report.getLines() != null) {
-                    for (ExpenseLineResponse l : report.getLines()) {
-                        if (l.getAmount() != null) total = total.add(l.getAmount());
+            try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
+                 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.EXCEL.withDelimiter(';')
+                         .withHeader("ID Note", "Titre Note", "Employé", "Département", "Statut", "Date Dépense", "Catégorie", "Description Dépense", "Montant Dépense", "Plafond Catégorie", "Dépassement Plafond", "Devise"))) {
+
+                for (ExpenseReportResponse report : reports) {
+                    if (report.getLines() != null && !report.getLines().isEmpty()) {
+                        for (ExpenseLineResponse line : report.getLines()) {
+                            csvPrinter.printRecord(
+                                    report.getId(),
+                                    report.getTitle(),
+                                    report.getEmployeeName(),
+                                    report.getEmployeeDepartmentName() != null ? report.getEmployeeDepartmentName() : "N/A",
+                                    report.getStatus() != null ? report.getStatus().name() : "",
+                                    line.getExpenseDate() != null ? line.getExpenseDate().format(formatter) : "",
+                                    line.getCategoryName() != null ? line.getCategoryName() : "N/A",
+                                    line.getDescription() != null ? line.getDescription() : "",
+                                    line.getAmount() != null ? line.getAmount() : "0.00",
+                                    line.getCategoryMaxAmount() != null ? line.getCategoryMaxAmount() : "Sans limite",
+                                    Boolean.TRUE.equals(line.getIsOverCeiling()) ? "OUI (Dépassement)" : "NON",
+                                    report.getCurrency() != null ? report.getCurrency() : "EUR"
+                            );
+                        }
+                    } else {
+                        // Header record if no line present
+                        csvPrinter.printRecord(
+                                report.getId(),
+                                report.getTitle(),
+                                report.getEmployeeName(),
+                                report.getEmployeeDepartmentName() != null ? report.getEmployeeDepartmentName() : "N/A",
+                                report.getStatus() != null ? report.getStatus().name() : "",
+                                report.getDateFrom() != null ? report.getDateFrom().format(formatter) : "",
+                                "N/A",
+                                report.getDescription() != null ? report.getDescription() : "",
+                                "0.00",
+                                "N/A",
+                                "NON",
+                                report.getCurrency() != null ? report.getCurrency() : "EUR"
+                        );
                     }
                 }
-
-                csvPrinter.printRecord(
-                        report.getId(),
-                        report.getTitle(),
-                        report.getEmployeeName(),
-                        report.getEmployeeDepartmentName(),
-                        report.getStatus(),
-                        report.getCurrency(),
-                        report.getDateFrom(),
-                        report.getDateTo(),
-                        total
-                );
+                csvPrinter.flush();
             }
-            csvPrinter.flush();
         } catch (Exception e) {
             throw new RuntimeException("Erreur lors de la génération de l'export CSV", e);
         }
