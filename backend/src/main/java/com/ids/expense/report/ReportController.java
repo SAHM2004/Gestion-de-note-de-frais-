@@ -14,6 +14,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -43,12 +45,27 @@ public class ReportController {
 
     @GetMapping("/expenses/export/csv")
     public ResponseEntity<InputStreamResource> exportExpensesCsv(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long reportId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         if (userDetails == null) return ResponseEntity.status(401).build();
 
-        Page<ExpenseReportResponse> page = expenseService.getAccessibleReports(userDetails, PageRequest.of(0, 1000));
-        ByteArrayInputStream csvStream = reportService.generateExpensesCsv(page.getContent());
+        List<ExpenseReportResponse> reports;
+        if (reportId != null) {
+            ExpenseReportResponse single = expenseService.getReportById(reportId, userDetails);
+            reports = List.of(single);
+        } else {
+            Page<ExpenseReportResponse> page = expenseService.getAccessibleReports(userDetails, PageRequest.of(0, 1000));
+            reports = page.getContent();
+            if (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status)) {
+                reports = reports.stream()
+                        .filter(r -> r.getStatus().name().equalsIgnoreCase(status))
+                        .collect(Collectors.toList());
+            }
+        }
+
+        ByteArrayInputStream csvStream = reportService.generateExpensesCsv(reports);
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "attachment; filename=Notes_de_frais_export.csv");

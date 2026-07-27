@@ -8,6 +8,8 @@ import java.time.LocalDate;
 @Data
 @Builder
 public class OcrResponse {
+    private Boolean isValidReceipt;
+    private String errorMessage;
     private BigDecimal extractedAmount;
     private LocalDate extractedDate;
     private Long suggestedCategoryId;

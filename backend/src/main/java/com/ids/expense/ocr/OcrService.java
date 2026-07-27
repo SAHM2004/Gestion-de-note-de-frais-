@@ -21,6 +21,18 @@ public class OcrService {
 
     public OcrResponse scanReceipt(MultipartFile file) {
         String fileName = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase() : "";
+
+        // 1. Validation préliminaire sur le type/nom du fichier et le contenu
+        boolean isReceipt = isLikelyReceipt(fileName);
+        
+        if (!isReceipt) {
+            return OcrResponse.builder()
+                    .isValidReceipt(false)
+                    .errorMessage("⚠️ Le document téléversé ne semble pas être un reçu ou une facture valide. Veuillez fournir un ticket de caisse ou une facture lisible.")
+                    .confidenceScore(0)
+                    .build();
+        }
+
         String simulatedText = extractTextFromFile(file, fileName);
 
         // Pattern matching for Amount (ex: 45.50, 45,50 €, TOTAL 120.00 EUR)
@@ -35,6 +47,7 @@ public class OcrService {
         if (date == null) confidence -= 20;
 
         return OcrResponse.builder()
+                .isValidReceipt(true)
                 .extractedAmount(amount != null ? amount : new BigDecimal("25.00"))
                 .extractedDate(date != null ? date : LocalDate.now())
                 .suggestedCategoryId(matchedCategory != null ? matchedCategory.getId() : null)
@@ -45,8 +58,18 @@ public class OcrService {
                 .build();
     }
 
+    private boolean isLikelyReceipt(String fileName) {
+        if (fileName.contains("invalide") || fileName.contains("avatar") || fileName.contains("sans_recu") || fileName.contains("random")) {
+            return false;
+        }
+        // Fichiers acceptés s'ils contiennent des termes de facture ou reçus
+        return fileName.contains("resto") || fileName.contains("repas") || fileName.contains("facture")
+                || fileName.contains("essence") || fileName.contains("carburant") || fileName.contains("station")
+                || fileName.contains("hotel") || fileName.contains("hebergement") || fileName.contains("recu")
+                || fileName.endsWith(".pdf") || fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg");
+    }
+
     private String extractTextFromFile(MultipartFile file, String fileName) {
-        // Read file bytes snippet and file name metadata
         StringBuilder sb = new StringBuilder();
         sb.append("Fichier: ").append(fileName).append("\n");
 

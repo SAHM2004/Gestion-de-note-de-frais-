@@ -258,10 +258,15 @@
                 <span class="text-xl font-black text-primary">{{ getReportTotal(selectedReportForView()!) | number }} FCFA</span>
               </div>
 
-              <!-- Button: Print PDF Report -->
-              <button (click)="downloadPdf(selectedReportForView()!.id)" class="w-full mt-4 bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md text-sm">
-                <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span> Imprimer Bordereau PDF
-              </button>
+              <!-- Buttons: Print PDF & Export CSV -->
+              <div class="grid grid-cols-2 gap-2 mt-4">
+                <button (click)="downloadPdf(selectedReportForView()!.id)" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md text-xs">
+                  <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span> PDF Bordereau
+                </button>
+                <button (click)="exportCsv(selectedReportForView()!.id)" class="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md text-xs">
+                  <span class="material-symbols-outlined text-[16px]">table_chart</span> Exporter CSV
+                </button>
+              </div>
               @if (selectedReportForView()!.status === 'DRAFT') {
                 <div class="flex gap-2 w-full mt-4">
                   <button (click)="editReport(selectedReportForView()!.id)" class="flex-1 bg-surface-container-high text-on-surface font-semibold py-2 px-4 rounded-lg hover:bg-surface-container-highest transition-all flex items-center justify-center gap-2 shadow-sm">

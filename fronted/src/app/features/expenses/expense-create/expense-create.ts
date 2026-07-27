@@ -64,6 +64,7 @@ export class ExpenseCreate implements OnInit {
   public attachmentError: string | null = null;
   public isScanningOcr = signal(false);
   public ocrSuccessMessage = signal<string | null>(null);
+  public ocrErrorMessage = signal<string | null>(null);
 
   public triggerOcrScan(fileInput: HTMLInputElement, line: TempLine) {
     const file = fileInput.files?.[0];
@@ -71,10 +72,20 @@ export class ExpenseCreate implements OnInit {
 
     this.isScanningOcr.set(true);
     this.ocrSuccessMessage.set(null);
+    this.ocrErrorMessage.set(null);
 
     this.expenseService.scanOcrReceipt(file).subscribe({
       next: (res) => {
         this.isScanningOcr.set(false);
+
+        if (res.isValidReceipt === false) {
+          this.ocrErrorMessage.set(res.errorMessage || "⚠️ Le document téléversé n'est pas un reçu ou une facture valide.");
+          this.ocrSuccessMessage.set(null);
+          setTimeout(() => this.ocrErrorMessage.set(null), 6000);
+          return;
+        }
+
+        this.ocrErrorMessage.set(null);
         if (res.extractedAmount) {
           line.amount = res.extractedAmount;
         }
@@ -92,7 +103,8 @@ export class ExpenseCreate implements OnInit {
       },
       error: (err) => {
         this.isScanningOcr.set(false);
-        console.error('Erreur OCR', err);
+        this.ocrErrorMessage.set("⚠️ Impossible d'analyser ce fichier. Veuillez fournir un reçu valide.");
+        setTimeout(() => this.ocrErrorMessage.set(null), 6000);
       }
     });
   }

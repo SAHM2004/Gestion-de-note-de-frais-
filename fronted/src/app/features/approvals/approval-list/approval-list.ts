@@ -42,8 +42,9 @@ export class ApprovalList {
     this.expenseService.downloadPdfReport(reportId);
   }
 
-  public exportCsv() {
-    this.expenseService.downloadCsvExport();
+  public exportCsv(reportId?: number) {
+    const status = this.activeTab() === 'TO_REIMBURSE' ? 'APPROVED' : 'IN_PROGRESS';
+    this.expenseService.downloadCsvExport(status, reportId);
   }
 
   public activeTab = signal<'TO_VALIDATE' | 'TO_REIMBURSE'>('TO_VALIDATE');

@@ -51,8 +51,8 @@ export class ExpenseListComponent {
     this.expenseService.downloadPdfReport(reportId);
   }
 
-  public exportCsv() {
-    this.expenseService.downloadCsvExport();
+  public exportCsv(reportId?: number) {
+    this.expenseService.downloadCsvExport(undefined, reportId);
   }
 
   public getWorkflowStepsForReport(report: ExpenseReport) {

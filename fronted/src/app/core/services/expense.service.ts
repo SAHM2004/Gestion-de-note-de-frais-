@@ -311,14 +311,21 @@ export class ExpenseService {
     });
   }
 
-  public downloadCsvExport(): void {
-    const url = API_ENDPOINTS.reports.csv;
+  public downloadCsvExport(status?: string, reportId?: number) {
+    let url = API_ENDPOINTS.reports.csvExport;
+    const params: string[] = [];
+    if (status) params.push(`status=${encodeURIComponent(status)}`);
+    if (reportId) params.push(`reportId=${reportId}`);
+    if (params.length > 0) {
+      url += '?' + params.join('&');
+    }
+
     this.http.get(url, { responseType: 'blob' }).subscribe({
       next: (blob: Blob) => {
         const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = downloadUrl;
-        link.download = `Notes_de_frais_export.csv`;
+        link.download = reportId ? `Note_de_frais_${reportId}_export.csv` : `Notes_de_frais_export.csv`;
         link.click();
         window.URL.revokeObjectURL(downloadUrl);
       },
@@ -330,8 +337,10 @@ export class ExpenseService {
   // OCR & Scan IA
   // ------------------------------------------------------------------
   public scanOcrReceipt(file: File): Observable<{
-    extractedAmount: number;
-    extractedDate: string;
+    isValidReceipt?: boolean;
+    errorMessage?: string;
+    extractedAmount?: number;
+    extractedDate?: string;
     suggestedCategoryId?: number;
     suggestedCategoryName?: string;
     merchantName?: string;
