@@ -312,7 +312,7 @@ export class ExpenseService {
   }
 
   public downloadCsvExport(status?: string, reportId?: number, ids?: number[]) {
-    let url = API_ENDPOINTS.reports.csvExport;
+    let url = API_ENDPOINTS.reports.csv;
     const params: string[] = [];
     if (ids && ids.length > 0) {
       params.push(`ids=${ids.join(',')}`);
