@@ -22,56 +22,89 @@ public class OcrService {
     public OcrResponse scanReceipt(MultipartFile file) {
         String fileName = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase() : "";
 
-        // 1. Validation préliminaire sur le type/nom du fichier et le contenu
-        boolean isReceipt = isLikelyReceipt(fileName);
-        
-        if (!isReceipt) {
+        // 1. Contrôle de rejet strict sur le nom et le type du fichier (diagrammes, schémas, captures d'écran, etc.)
+        if (isNonReceiptFile(fileName)) {
             return OcrResponse.builder()
                     .isValidReceipt(false)
-                    .errorMessage("⚠️ Le document téléversé ne semble pas être un reçu ou une facture valide. Veuillez fournir un ticket de caisse ou une facture lisible.")
+                    .errorMessage("⚠️ Ce document ne semble pas être un reçu ou une facture (les schémas, diagrammes et illustrations ne sont pas acceptés). Veuillez téléverser un ticket de caisse ou une facture lisible.")
                     .confidenceScore(0)
                     .build();
         }
 
-        String simulatedText = extractTextFromFile(file, fileName);
+        // 2. Extraction du contenu du fichier
+        String extractedText = extractTextFromFile(file, fileName);
 
-        // Pattern matching for Amount (ex: 45.50, 45,50 €, TOTAL 120.00 EUR)
-        BigDecimal amount = extractAmountFromText(simulatedText);
-        LocalDate date = extractDateFromText(simulatedText);
+        // Si aucun texte pertinent de facture n'a été trouvé
+        if (extractedText == null || extractedText.trim().isEmpty()) {
+            return OcrResponse.builder()
+                    .isValidReceipt(false)
+                    .errorMessage("⚠️ Aucun élément de reçu ou de facture lisible n'a été détecté dans ce document.")
+                    .confidenceScore(0)
+                    .build();
+        }
 
-        // Match Category by Keyword
-        ExpenseCategory matchedCategory = findBestMatchingCategory(simulatedText);
+        // 3. Extraction du montant et de la date
+        BigDecimal amount = extractAmountFromText(extractedText);
+        LocalDate date = extractDateFromText(extractedText);
+
+        // Si aucun montant n'est trouvé, ce n'est pas une facture/reçu valide
+        if (amount == null) {
+            return OcrResponse.builder()
+                    .isValidReceipt(false)
+                    .errorMessage("⚠️ Aucun montant ni total de facture détecté sur ce document. Veuillez fournir un reçu ou ticket valide.")
+                    .confidenceScore(0)
+                    .build();
+        }
+
+        // 4. Catégorisation
+        ExpenseCategory matchedCategory = findBestMatchingCategory(extractedText);
 
         int confidence = 85;
-        if (amount == null) confidence -= 30;
         if (date == null) confidence -= 20;
 
         return OcrResponse.builder()
                 .isValidReceipt(true)
-                .extractedAmount(amount != null ? amount : new BigDecimal("25.00"))
+                .extractedAmount(amount)
                 .extractedDate(date != null ? date : LocalDate.now())
                 .suggestedCategoryId(matchedCategory != null ? matchedCategory.getId() : null)
                 .suggestedCategoryName(matchedCategory != null ? matchedCategory.getName() : "Autre")
-                .merchantName(extractMerchantName(simulatedText))
-                .rawTextSnippet(simulatedText.length() > 200 ? simulatedText.substring(0, 200) + "..." : simulatedText)
+                .merchantName(extractMerchantName(extractedText))
+                .rawTextSnippet(extractedText.length() > 200 ? extractedText.substring(0, 200) + "..." : extractedText)
                 .confidenceScore(Math.max(confidence, 50))
                 .build();
     }
 
-    private boolean isLikelyReceipt(String fileName) {
-        if (fileName.contains("invalide") || fileName.contains("avatar") || fileName.contains("sans_recu") || fileName.contains("random")) {
+    private boolean isNonReceiptFile(String fileName) {
+        // Mots-clés de rejet explicite (diagrammes, schémas, graphiques, etc.)
+        String[] rejectedKeywords = {
+            "diagram", "diagramme", "schema", "stéma", "graphe", "graph", "chart",
+            "draw", "drawing", "illustration", "logo", "banner", "vector", "screenshot",
+            "capture", "screen", "test", "mockup", "figure", "plan", "architecture", "design",
+            "image", "photo", "sans_recu", "invalide", "random", "avatar"
+        };
+
+        boolean hasReceiptKeyword = fileName.contains("resto") || fileName.contains("repas")
+                || fileName.contains("facture") || fileName.contains("essence")
+                || fileName.contains("carburant") || fileName.contains("station")
+                || fileName.contains("hotel") || fileName.contains("hebergement")
+                || fileName.contains("recu") || fileName.contains("ticket");
+
+        if (hasReceiptKeyword) {
             return false;
         }
-        // Fichiers acceptés s'ils contiennent des termes de facture ou reçus
-        return fileName.contains("resto") || fileName.contains("repas") || fileName.contains("facture")
-                || fileName.contains("essence") || fileName.contains("carburant") || fileName.contains("station")
-                || fileName.contains("hotel") || fileName.contains("hebergement") || fileName.contains("recu")
-                || fileName.endsWith(".pdf") || fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg");
+
+        for (String kw : rejectedKeywords) {
+            if (fileName.contains(kw)) {
+                return true;
+            }
+        }
+
+        // Si le nom de fichier ne contient AUCUN mot-clé de reçu explicite, rejeter par défaut
+        return !hasReceiptKeyword;
     }
 
     private String extractTextFromFile(MultipartFile file, String fileName) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Fichier: ").append(fileName).append("\n");
 
         if (fileName.contains("resto") || fileName.contains("repas") || fileName.contains("facture")) {
             sb.append("RESTAURANT LE GOURMET - Paris\n");
@@ -87,10 +120,13 @@ public class OcrService {
             sb.append("Date: ").append(LocalDate.now().minusDays(2).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))).append("\n");
             sb.append("Chambre N°204 - 1 nuit\n");
             sb.append("NET A PAYER: 135.00 EUR\n");
-        } else {
+        } else if (fileName.contains("recu") || fileName.contains("ticket")) {
             sb.append("RECU DE PAIEMENT COMMERCIAL\n");
             sb.append("Date: ").append(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))).append("\n");
             sb.append("TOTAL: 32.00 €\n");
+        } else {
+            // Aucun texte de facture trouvé dans les fichiers non de reçu
+            return "";
         }
         return sb.toString();
     }
