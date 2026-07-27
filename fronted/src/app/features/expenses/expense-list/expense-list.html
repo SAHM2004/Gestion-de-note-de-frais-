@@ -12,11 +12,31 @@
   </div>
 
   <div class="flex-1 overflow-y-auto px-8 pb-8">
+    @if (selectedReportIds().size > 0) {
+      <div class="mb-4 p-4 bg-primary/10 border border-primary/30 rounded-xl flex items-center justify-between animate-in fade-in">
+        <span class="font-bold text-sm text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined text-[20px]">check_box</span>
+          {{ selectedReportIds().size }} note(s) sélectionnée(s)
+        </span>
+        <div class="flex items-center gap-3">
+          <button (click)="exportSelectedCsv()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-4 py-2 rounded-lg text-xs transition-all shadow-sm flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">table_chart</span> Exporter la sélection (CSV)
+          </button>
+          <button (click)="downloadSelectedPdf()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-4 py-2 rounded-lg text-xs transition-all shadow-sm flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span> Imprimer les Bordereaux (PDF)
+          </button>
+        </div>
+      </div>
+    }
+
     <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm flex flex-col">
       <div class="overflow-x-auto">
         <table class="w-full text-left">
           <thead class="bg-surface-container-low">
             <tr>
+              <th class="px-4 py-4 w-10 text-center">
+                <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll($event)" class="rounded border-outline-variant text-primary focus:ring-primary">
+              </th>
               <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase">Date de début</th>
               <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase">Titre</th>
               <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase">Lignes</th>
@@ -26,7 +46,10 @@
           </thead>
           <tbody class="divide-y divide-outline-variant">
             @for (report of paginatedExpenses(); track report.id) {
-              <tr class="hover:bg-surface-container transition-colors cursor-pointer" (click)="openReportDetails(report)">
+              <tr class="hover:bg-surface-container transition-colors cursor-pointer" [class.bg-primary/5]="isReportSelected(report.id)" (click)="openReportDetails(report)">
+                <td class="px-4 py-4 w-10 text-center" (click)="$event.stopPropagation()">
+                  <input type="checkbox" [checked]="isReportSelected(report.id)" (change)="toggleReportSelection(report.id, $event)" class="rounded border-outline-variant text-primary focus:ring-primary">
+                </td>
                 <td class="px-6 py-4 text-body-md">{{ report.dateFrom | date:'dd/MM/yyyy' }}</td>
                 <td class="px-6 py-4 text-body-md font-semibold">{{ report.title }}</td>
                 <td class="px-6 py-4">

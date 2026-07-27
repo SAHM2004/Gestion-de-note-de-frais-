@@ -38,6 +38,49 @@ export class ApprovalList {
     return this.attachmentService.formatFileSize(bytes);
   }
 
+  public selectedReportIds = signal<Set<number>>(new Set());
+
+  public toggleReportSelection(id: number, event?: Event) {
+    if (event) event.stopPropagation();
+    const current = new Set(this.selectedReportIds());
+    if (current.has(id)) {
+      current.delete(id);
+    } else {
+      current.add(id);
+    }
+    this.selectedReportIds.set(current);
+  }
+
+  public isReportSelected(id: number): boolean {
+    return this.selectedReportIds().has(id);
+  }
+
+  public toggleSelectAll(event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    if (checked) {
+      const allIds = new Set(this.activeList().map(r => r.id));
+      this.selectedReportIds.set(allIds);
+    } else {
+      this.selectedReportIds.set(new Set());
+    }
+  }
+
+  public isAllSelected(): boolean {
+    const list = this.activeList();
+    return list.length > 0 && list.every(r => this.selectedReportIds().has(r.id));
+  }
+
+  public exportSelectedCsv() {
+    const ids = Array.from(this.selectedReportIds());
+    if (ids.length === 0) return;
+    this.expenseService.downloadCsvExport(undefined, undefined, ids);
+  }
+
+  public downloadSelectedPdf() {
+    const ids = Array.from(this.selectedReportIds());
+    ids.forEach(id => this.expenseService.downloadPdfReport(id));
+  }
+
   public downloadPdf(reportId: number) {
     this.expenseService.downloadPdfReport(reportId);
   }

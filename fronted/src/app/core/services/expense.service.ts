@@ -311,11 +311,15 @@ export class ExpenseService {
     });
   }
 
-  public downloadCsvExport(status?: string, reportId?: number) {
+  public downloadCsvExport(status?: string, reportId?: number, ids?: number[]) {
     let url = API_ENDPOINTS.reports.csvExport;
     const params: string[] = [];
-    if (status) params.push(`status=${encodeURIComponent(status)}`);
-    if (reportId) params.push(`reportId=${reportId}`);
+    if (ids && ids.length > 0) {
+      params.push(`ids=${ids.join(',')}`);
+    } else {
+      if (status) params.push(`status=${encodeURIComponent(status)}`);
+      if (reportId) params.push(`reportId=${reportId}`);
+    }
     if (params.length > 0) {
       url += '?' + params.join('&');
     }
@@ -325,7 +329,7 @@ export class ExpenseService {
         const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = downloadUrl;
-        link.download = reportId ? `Note_de_frais_${reportId}_export.csv` : `Notes_de_frais_export.csv`;
+        link.download = ids && ids.length > 0 ? `Notes_de_frais_selection.csv` : (reportId ? `Note_de_frais_${reportId}_export.csv` : `Notes_de_frais_export.csv`);
         link.click();
         window.URL.revokeObjectURL(downloadUrl);
       },

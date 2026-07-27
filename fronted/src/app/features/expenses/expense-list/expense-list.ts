@@ -38,6 +38,48 @@ export class ExpenseListComponent {
 
   // Selected report details modal
   public selectedReportForView = signal<ExpenseReport | null>(null);
+  public selectedReportIds = signal<Set<number>>(new Set());
+
+  public toggleReportSelection(id: number, event?: Event) {
+    if (event) event.stopPropagation();
+    const current = new Set(this.selectedReportIds());
+    if (current.has(id)) {
+      current.delete(id);
+    } else {
+      current.add(id);
+    }
+    this.selectedReportIds.set(current);
+  }
+
+  public isReportSelected(id: number): boolean {
+    return this.selectedReportIds().has(id);
+  }
+
+  public toggleSelectAll(event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    if (checked) {
+      const allIds = new Set(this.userExpenses().map(r => r.id));
+      this.selectedReportIds.set(allIds);
+    } else {
+      this.selectedReportIds.set(new Set());
+    }
+  }
+
+  public isAllSelected(): boolean {
+    const expenses = this.userExpenses();
+    return expenses.length > 0 && expenses.every(r => this.selectedReportIds().has(r.id));
+  }
+
+  public exportSelectedCsv() {
+    const ids = Array.from(this.selectedReportIds());
+    if (ids.length === 0) return;
+    this.expenseService.downloadCsvExport(undefined, undefined, ids);
+  }
+
+  public downloadSelectedPdf() {
+    const ids = Array.from(this.selectedReportIds());
+    ids.forEach(id => this.expenseService.downloadPdfReport(id));
+  }
 
   public openReportDetails(report: ExpenseReport) {
     this.selectedReportForView.set(report);

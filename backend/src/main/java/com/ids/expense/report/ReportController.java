@@ -47,12 +47,17 @@ public class ReportController {
     public ResponseEntity<InputStreamResource> exportExpensesCsv(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long reportId,
+            @RequestParam(required = false) List<Long> ids,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         if (userDetails == null) return ResponseEntity.status(401).build();
 
         List<ExpenseReportResponse> reports;
-        if (reportId != null) {
+        if (ids != null && !ids.isEmpty()) {
+            reports = ids.stream()
+                    .map(id -> expenseService.getReportById(id, userDetails))
+                    .collect(Collectors.toList());
+        } else if (reportId != null) {
             ExpenseReportResponse single = expenseService.getReportById(reportId, userDetails);
             reports = List.of(single);
         } else {

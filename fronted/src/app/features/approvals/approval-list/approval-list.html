@@ -30,13 +30,33 @@
       }
     </div>
     <div class="flex-1 overflow-y-auto">
+      @if (selectedReportIds().size > 0) {
+        <div class="p-3 bg-primary/10 border-b border-primary/30 flex items-center justify-between animate-in fade-in">
+          <span class="text-xs font-bold text-primary flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">check_box</span>
+            {{ selectedReportIds().size }} sélectionnée(s)
+          </span>
+          <div class="flex items-center gap-2">
+            <button (click)="exportSelectedCsv()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-2.5 py-1 rounded-md text-[11px] transition-all flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">table_chart</span> CSV
+            </button>
+            <button (click)="downloadSelectedPdf()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-2.5 py-1 rounded-md text-[11px] transition-all flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">picture_as_pdf</span> PDF
+            </button>
+          </div>
+        </div>
+      }
+
       @for (report of paginatedApprovals(); track report.id) {
         <div (click)="selectReport(report)" 
              [class.bg-surface-container-low]="report.id === selectedReport()?.id" 
              [class.border-l-4]="report.id === selectedReport()?.id"
              [class.border-primary]="report.id === selectedReport()?.id"
              class="p-4 border-b border-outline-variant cursor-pointer transition-all hover:bg-surface-container-lowest">
-          <div class="flex gap-4">
+          <div class="flex gap-3 items-start">
+            <div (click)="$event.stopPropagation()" class="pt-1">
+              <input type="checkbox" [checked]="isReportSelected(report.id)" (change)="toggleReportSelection(report.id, $event)" class="rounded border-outline-variant text-primary focus:ring-primary">
+            </div>
             <div class="flex-1">
               <div class="flex justify-between items-start">
                 <h3 class="font-body-lg text-body-lg font-bold text-primary">{{ report.title }}</h3>
