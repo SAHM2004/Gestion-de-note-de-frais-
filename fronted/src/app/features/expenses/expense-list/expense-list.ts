@@ -1,6 +1,6 @@
 import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink, RouterModule } from '@angular/router';
 import { ExpenseService } from '../../../core/services/expense.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ExpenseStatus, ExpenseReport, ExpenseAttachment } from '../../../core/models/models';
@@ -8,7 +8,7 @@ import { AttachmentService } from '../../../core/services/attachment.service';
 
 @Component({
   selector: 'app-expense-list',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink, RouterModule],
   templateUrl: './expense-list.html'
 })
 export class ExpenseListComponent {
@@ -16,6 +16,10 @@ export class ExpenseListComponent {
   public authService = inject(AuthService);
   private router = inject(Router);
   public attachmentService = inject(AttachmentService);
+
+  public createExpense() {
+    this.router.navigate(['/expenses/new']);
+  }
 
   public getGlobalAttachments(report: ExpenseReport): ExpenseAttachment[] {
     return (report.attachments ?? []).filter(a => !a.lineId);
