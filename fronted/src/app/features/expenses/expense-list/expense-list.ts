@@ -47,6 +47,14 @@ export class ExpenseListComponent {
     this.selectedReportForView.set(null);
   }
 
+  public downloadPdf(reportId: number) {
+    this.expenseService.downloadPdfReport(reportId);
+  }
+
+  public exportCsv() {
+    this.expenseService.downloadCsvExport();
+  }
+
   public getWorkflowStepsForReport(report: ExpenseReport) {
     const isTechnical = report.employee.department?.name.toLowerCase().includes('info') || report.employee.department?.name.toLowerCase().includes('tech');
     

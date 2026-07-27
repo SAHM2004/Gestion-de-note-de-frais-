@@ -32,6 +32,8 @@ export class Settings implements OnInit {
 
   public catName = '';
   public catCode = '';
+  public catMaxAmount: number | null = null;
+  public catDescription = '';
   public depName = '';
   public depManagerId = '';
   public userName = '';
@@ -123,6 +125,8 @@ export class Settings implements OnInit {
       const cat = item as ExpenseCategory;
       this.catName = cat.name;
       this.catCode = cat.code;
+      this.catMaxAmount = cat.maxAmount ?? null;
+      this.catDescription = cat.description ?? '';
     } else if (type === 'department') {
       const dep = item as Department;
       this.depName = dep.name;
@@ -148,7 +152,12 @@ export class Settings implements OnInit {
   public saveItem() {
     if (this.modalType === 'category') {
       if (!this.catName || !this.catCode) return;
-      const catPayload: any = { name: this.catName, code: this.catCode.toUpperCase() };
+      const catPayload: any = { 
+        name: this.catName, 
+        code: this.catCode.toUpperCase(),
+        maxAmount: this.catMaxAmount,
+        description: this.catDescription
+      };
       if (this.editMode && this.selectedItemId !== null) {
         catPayload.id = this.selectedItemId;
       }

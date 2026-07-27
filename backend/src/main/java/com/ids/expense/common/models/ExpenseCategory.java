@@ -13,4 +13,8 @@ public class ExpenseCategory {
     
     private String name;
     private String code;
+    private String description;
+    
+    @Column(name = "max_amount")
+    private java.math.BigDecimal maxAmount;
 }

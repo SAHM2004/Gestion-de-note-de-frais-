@@ -36,6 +36,8 @@ public class ExpenseCategoryService {
         ExpenseCategory category = getCategoryById(id);
         category.setName(categoryDetails.getName());
         category.setCode(categoryDetails.getCode());
+        category.setDescription(categoryDetails.getDescription());
+        category.setMaxAmount(categoryDetails.getMaxAmount());
         return expenseCategoryRepository.save(category);
     }
 

@@ -62,6 +62,40 @@ export class ExpenseCreate implements OnInit {
   private nextLineLocalId = 1;
 
   public attachmentError: string | null = null;
+  public isScanningOcr = signal(false);
+  public ocrSuccessMessage = signal<string | null>(null);
+
+  public triggerOcrScan(fileInput: HTMLInputElement, line: TempLine) {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+
+    this.isScanningOcr.set(true);
+    this.ocrSuccessMessage.set(null);
+
+    this.expenseService.scanOcrReceipt(file).subscribe({
+      next: (res) => {
+        this.isScanningOcr.set(false);
+        if (res.extractedAmount) {
+          line.amount = res.extractedAmount;
+        }
+        if (res.extractedDate) {
+          line.expenseDate = res.extractedDate;
+        }
+        if (res.suggestedCategoryId) {
+          line.categoryId = String(res.suggestedCategoryId);
+        }
+        if (res.merchantName) {
+          line.description = `${res.merchantName} - Frais scanné par OCR`;
+        }
+        this.ocrSuccessMessage.set(`Scan réussi (${res.confidenceScore ?? 85}% de confiance) ! Champs pré-remplis.`);
+        setTimeout(() => this.ocrSuccessMessage.set(null), 4000);
+      },
+      error: (err) => {
+        this.isScanningOcr.set(false);
+        console.error('Erreur OCR', err);
+      }
+    });
+  }
 
   constructor() {
   }

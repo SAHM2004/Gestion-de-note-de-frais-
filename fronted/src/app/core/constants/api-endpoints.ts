@@ -37,6 +37,13 @@ export const API_ENDPOINTS = {
   analytics: {
     summary: `${API_BASE_URL}/analytics/summary`,
   },
+  reports: {
+    pdf: (id: number) => `${API_BASE_URL}/reports/expenses/${id}/pdf`,
+    csv: `${API_BASE_URL}/reports/expenses/export/csv`,
+  },
+  ocr: {
+    scan: `${API_BASE_URL}/ocr/scan`,
+  },
 } as const;
 
 export const ALLOWED_ATTACHMENT_TYPES = [

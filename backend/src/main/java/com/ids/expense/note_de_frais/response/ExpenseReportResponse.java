@@ -25,6 +25,8 @@ public class ExpenseReportResponse {
     private String rejectionReason;
     private String rejectedAtStepName;
 
+    private Boolean isAnyLineOverCeiling;
+
     private List<ExpenseLineResponse> lines;
     private List<ExpenseAttachmentResponse> attachments;
 }

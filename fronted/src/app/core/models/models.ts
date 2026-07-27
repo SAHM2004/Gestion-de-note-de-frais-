@@ -50,6 +50,9 @@ export interface ExpenseLine {
   category: ExpenseCategory;
   description: string;
   amount: number;
+  categoryMaxAmount?: number;
+  isOverCeiling?: boolean;
+  ceilingWarningMessage?: string;
   itineraryFrom?: string;
   itineraryTo?: string;
   attachments?: ExpenseAttachment[];
@@ -59,6 +62,8 @@ export interface ExpenseCategory {
   id: number;
   name: string;
   code: string;
+  description?: string;
+  maxAmount?: number;
 }
 
 export interface ExpenseAttachment {
@@ -87,6 +92,7 @@ export interface ExpenseReport {
   currentStep?: WorkflowStep;
   rejectionReason?: string;
   rejectedAtStepName?: string;
+  isAnyLineOverCeiling?: boolean;
   lines: ExpenseLine[];
   attachments?: ExpenseAttachment[];
 }
@@ -107,6 +113,7 @@ export interface ExpenseReportApiResponse {
   currentStepName?: string;
   rejectionReason?: string;
   rejectedAtStepName?: string;
+  isAnyLineOverCeiling?: boolean;
   lines: ExpenseLineApiResponse[];
   attachments?: ExpenseAttachment[];
 }
@@ -118,6 +125,9 @@ export interface ExpenseLineApiResponse {
   categoryName: string;
   description: string;
   amount: number;
+  categoryMaxAmount?: number;
+  isOverCeiling?: boolean;
+  ceilingWarningMessage?: string;
   itineraryFrom?: string;
   itineraryTo?: string;
   attachments?: ExpenseAttachment[];

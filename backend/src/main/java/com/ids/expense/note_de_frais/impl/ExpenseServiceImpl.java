@@ -304,7 +304,10 @@ public class ExpenseServiceImpl implements ExpenseService {
         }
         
         if (report.getLines() != null) {
-            response.setLines(report.getLines().stream().map(this::mapToLineResponse).collect(Collectors.toList()));
+            List<ExpenseLineResponse> lineResponses = report.getLines().stream().map(this::mapToLineResponse).collect(Collectors.toList());
+            response.setLines(lineResponses);
+            boolean anyOver = lineResponses.stream().anyMatch(l -> Boolean.TRUE.equals(l.getIsOverCeiling()));
+            response.setIsAnyLineOverCeiling(anyOver);
         }
 
         if (report.getId() != null) {
@@ -326,6 +329,16 @@ public class ExpenseServiceImpl implements ExpenseService {
         if (line.getCategory() != null) {
             response.setCategoryId(line.getCategory().getId());
             response.setCategoryName(line.getCategory().getName());
+            response.setCategoryMaxAmount(line.getCategory().getMaxAmount());
+            if (line.getCategory().getMaxAmount() != null && line.getAmount() != null) {
+                boolean over = line.getAmount().compareTo(line.getCategory().getMaxAmount()) > 0;
+                response.setIsOverCeiling(over);
+                if (over) {
+                    response.setCeilingWarningMessage("Plafond recommandé de " + line.getCategory().getMaxAmount() + " € dépassé (" + line.getAmount() + " €)");
+                }
+            } else {
+                response.setIsOverCeiling(false);
+            }
         }
 
         if (line.getId() != null) {

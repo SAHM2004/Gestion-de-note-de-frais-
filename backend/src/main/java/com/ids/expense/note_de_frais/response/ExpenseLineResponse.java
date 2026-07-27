@@ -13,6 +13,9 @@ public class ExpenseLineResponse {
     private String categoryName;
     private String description;
     private BigDecimal amount;
+    private BigDecimal categoryMaxAmount;
+    private Boolean isOverCeiling;
+    private String ceilingWarningMessage;
     private String itineraryFrom;
     private String itineraryTo;
     private List<ExpenseAttachmentResponse> attachments;

@@ -48,13 +48,20 @@ public class DataInitializer {
             System.out.println("Initialisation des données par défaut...");
 
             // 0. Création des Catégories de Frais
-            List<String> categories = Arrays.asList(
-                "Déplacement", "Restauration", "Hébergement", "Carburant", "Fournitures", "Autre"
+            java.util.Map<String, java.math.BigDecimal> defaultMaxAmounts = java.util.Map.of(
+                "Déplacement", new java.math.BigDecimal("200.00"),
+                "Restauration", new java.math.BigDecimal("50.00"),
+                "Hébergement", new java.math.BigDecimal("150.00"),
+                "Carburant", new java.math.BigDecimal("80.00"),
+                "Fournitures", new java.math.BigDecimal("100.00"),
+                "Autre", new java.math.BigDecimal("100.00")
             );
-            for (String catName : categories) {
+            for (java.util.Map.Entry<String, java.math.BigDecimal> entry : defaultMaxAmounts.entrySet()) {
                 ExpenseCategory cat = new ExpenseCategory();
-                cat.setName(catName);
-                cat.setCode(catName.substring(0, Math.min(3, catName.length())).toUpperCase());
+                cat.setName(entry.getKey());
+                cat.setCode(entry.getKey().substring(0, Math.min(3, entry.getKey().length())).toUpperCase());
+                cat.setMaxAmount(entry.getValue());
+                cat.setDescription("Plafond recommandé : " + entry.getValue() + " €");
                 expenseCategoryRepository.save(cat);
             }
 

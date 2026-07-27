@@ -67,10 +67,14 @@ export class ExpenseService {
       category: {
         id: l.categoryId,
         name: l.categoryName,
-        code: l.categoryName?.substring(0, 3).toUpperCase() ?? 'AUT'
+        code: l.categoryName?.substring(0, 3).toUpperCase() ?? 'AUT',
+        maxAmount: l.categoryMaxAmount
       },
       description: l.description,
       amount: l.amount,
+      categoryMaxAmount: l.categoryMaxAmount,
+      isOverCeiling: l.isOverCeiling,
+      ceilingWarningMessage: l.ceilingWarningMessage,
       itineraryFrom: l.itineraryFrom,
       itineraryTo: l.itineraryTo,
       attachments: l.attachments
@@ -96,6 +100,7 @@ export class ExpenseService {
       currentStep,
       rejectionReason: api.rejectionReason,
       rejectedAtStepName: api.rejectedAtStepName,
+      isAnyLineOverCeiling: api.isAnyLineOverCeiling,
       lines,
       attachments: api.attachments
     };
@@ -286,5 +291,54 @@ export class ExpenseService {
       params = params.set('departmentId', departmentId.toString());
     }
     return this.http.get<any>(API_ENDPOINTS.analytics.summary, { params });
+  }
+
+  // ------------------------------------------------------------------
+  // Exportations PDF & CSV
+  // ------------------------------------------------------------------
+  public downloadPdfReport(reportId: number): void {
+    const url = API_ENDPOINTS.reports.pdf(reportId);
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: (blob: Blob) => {
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `Note_de_frais_${reportId}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(downloadUrl);
+      },
+      error: err => console.error('Erreur lors du téléchargement du PDF', err)
+    });
+  }
+
+  public downloadCsvExport(): void {
+    const url = API_ENDPOINTS.reports.csv;
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: (blob: Blob) => {
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `Notes_de_frais_export.csv`;
+        link.click();
+        window.URL.revokeObjectURL(downloadUrl);
+      },
+      error: err => console.error('Erreur lors du téléchargement du CSV', err)
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // OCR & Scan IA
+  // ------------------------------------------------------------------
+  public scanOcrReceipt(file: File): Observable<{
+    extractedAmount: number;
+    extractedDate: string;
+    suggestedCategoryId?: number;
+    suggestedCategoryName?: string;
+    merchantName?: string;
+    confidenceScore?: number;
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<any>(API_ENDPOINTS.ocr.scan, formData);
   }
 }

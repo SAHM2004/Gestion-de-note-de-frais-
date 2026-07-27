@@ -38,6 +38,14 @@ export class ApprovalList {
     return this.attachmentService.formatFileSize(bytes);
   }
 
+  public downloadPdf(reportId: number) {
+    this.expenseService.downloadPdfReport(reportId);
+  }
+
+  public exportCsv() {
+    this.expenseService.downloadCsvExport();
+  }
+
   public activeTab = signal<'TO_VALIDATE' | 'TO_REIMBURSE'>('TO_VALIDATE');
 
   public pendingApprovals = computed(() => {
