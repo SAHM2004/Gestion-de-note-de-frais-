@@ -14,6 +14,7 @@ public class AnalyticsSummaryResponse {
     private BigDecimal totalSubmitted;
     private BigDecimal totalApproved;
     private BigDecimal totalPaid;
+    private BigDecimal totalRejected;
     private double rejectionRatePercent;
     private List<DepartmentExpenseStat> byDepartment;
     private List<CategoryExpenseStat> topCategories;

@@ -26,45 +26,47 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ExpenseServiceImpl implements ExpenseService {
-    
+
     private final ExpenseReportRepository reportRepository;
     private final ExpenseLineRepository lineRepository;
     private final ExpenseCategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final AttachmentService attachmentService;
-    
+
     @Override
     public Page<ExpenseReportResponse> getAccessibleReports(UserDetailsImpl currentUser, Pageable pageable) {
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
         RoleType role = user.getRole();
-        
+
         List<ExpenseReport> accessibleReports = new ArrayList<>();
         accessibleReports.addAll(reportRepository.findByEmployeeId(user.getId()));
-        
+
         if (role == RoleType.MANAGER) {
-            accessibleReports.addAll(reportRepository.findByCurrentStepRequiredRoleAndEmployeeDepartmentId(role, user.getDepartment().getId()));
+            accessibleReports.addAll(reportRepository.findByCurrentStepRequiredRoleAndEmployeeDepartmentId(role,
+                    user.getDepartment().getId()));
         } else if (role == RoleType.GENERAL_DIRECTOR || role == RoleType.TECHNICAL_DIRECTOR) {
             accessibleReports.addAll(reportRepository.findByCurrentStepRequiredRole(role));
         } else if (role == RoleType.ACCOUNTANT) {
             accessibleReports.addAll(reportRepository.findByCurrentStepRequiredRole(role));
-            accessibleReports.addAll(reportRepository.findByStatusIn(Arrays.asList(ExpenseStatus.APPROVED, ExpenseStatus.PAID)));
+            accessibleReports
+                    .addAll(reportRepository.findByStatusIn(Arrays.asList(ExpenseStatus.APPROVED, ExpenseStatus.PAID)));
         }
-        
+
         List<ExpenseReportResponse> allResponses = accessibleReports.stream()
                 .distinct()
                 .map(this::mapToReportResponse)
                 .collect(Collectors.toList());
-        
+
         int pageSize = pageable.getPageSize();
         int pageNumber = pageable.getPageNumber();
         int start = pageNumber * pageSize;
         int end = Math.min(start + pageSize, allResponses.size());
-        
-        List<ExpenseReportResponse> pageContent = (start >= allResponses.size()) 
-                ? new ArrayList<>() 
+
+        List<ExpenseReportResponse> pageContent = (start >= allResponses.size())
+                ? new ArrayList<>()
                 : allResponses.subList(start, end);
-        
+
         return new PageImpl<>(pageContent, pageable, allResponses.size());
     }
 
@@ -86,10 +88,11 @@ public class ExpenseServiceImpl implements ExpenseService {
                 .orElseThrow(() -> new RuntimeException("Note introuvable"));
         return mapToReportResponse(report);
     }
-    
+
     @Override
     @Transactional
     public ExpenseReportResponse createDraft(ExpenseReportRequest request, User employee) {
+        validateReportDates(request.getDateFrom(), request.getDateTo());
         ExpenseReport report = new ExpenseReport();
         report.setTitle(request.getTitle());
         report.setDescription(request.getDescription());
@@ -115,6 +118,7 @@ public class ExpenseServiceImpl implements ExpenseService {
     @Override
     @Transactional
     public ExpenseReportResponse updateDraft(Long reportId, ExpenseReportRequest request, User employee) {
+        validateReportDates(request.getDateFrom(), request.getDateTo());
         ExpenseReport report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new RuntimeException("Note introuvable"));
 
@@ -154,15 +158,19 @@ public class ExpenseServiceImpl implements ExpenseService {
             List<ExpenseLine> updatedLines = new ArrayList<>();
             for (ExpenseLineRequest lineReq : request.getLines()) {
                 if (lineReq.getId() != null) {
-                    ExpenseLine existing = existingLines.stream().filter(l -> l.getId().equals(lineReq.getId())).findFirst().orElse(null);
+                    ExpenseLine existing = existingLines.stream().filter(l -> l.getId().equals(lineReq.getId()))
+                            .findFirst().orElse(null);
                     if (existing != null) {
+                        validateAmount(lineReq.getAmount());
+                        validateLineDate(lineReq.getExpenseDate(), report.getDateFrom());
                         existing.setExpenseDate(lineReq.getExpenseDate());
                         existing.setDescription(lineReq.getDescription());
                         existing.setAmount(lineReq.getAmount());
                         existing.setItineraryFrom(lineReq.getItineraryFrom());
                         existing.setItineraryTo(lineReq.getItineraryTo());
                         if (lineReq.getCategoryId() != null) {
-                            existing.setCategory(categoryRepository.findById(lineReq.getCategoryId()).orElse(existing.getCategory()));
+                            existing.setCategory(categoryRepository.findById(lineReq.getCategoryId())
+                                    .orElse(existing.getCategory()));
                         }
                         updatedLines.add(lineRepository.save(existing));
                     }
@@ -174,16 +182,22 @@ public class ExpenseServiceImpl implements ExpenseService {
             report.setLines(updatedLines);
         }
 
+        if (report.getLines() != null) {
+            for (ExpenseLine line : report.getLines()) {
+                validateLineDate(line.getExpenseDate(), report.getDateFrom());
+            }
+        }
+
         return mapToReportResponse(report);
     }
-    
+
     @Override
     @Transactional
     public ExpenseLineResponse addLineToReport(Long reportId, ExpenseLineRequest request, User employee) {
         ExpenseReport report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new RuntimeException("Note introuvable"));
         assertEditable(report, employee);
-        
+
         ExpenseLine line = buildLine(request, report);
         ExpenseLine savedLine = lineRepository.save(line);
         return mapToLineResponse(savedLine);
@@ -195,6 +209,9 @@ public class ExpenseServiceImpl implements ExpenseService {
         ExpenseLine line = lineRepository.findById(lineId)
                 .orElseThrow(() -> new RuntimeException("Ligne introuvable"));
         assertEditable(line.getReport(), employee);
+
+        validateAmount(request.getAmount());
+        validateLineDate(request.getExpenseDate(), line.getReport().getDateFrom());
 
         line.setExpenseDate(request.getExpenseDate());
         line.setDescription(request.getDescription());
@@ -210,7 +227,7 @@ public class ExpenseServiceImpl implements ExpenseService {
 
         return mapToLineResponse(lineRepository.save(line));
     }
-    
+
     @Override
     @Transactional
     public void deleteLine(Long lineId, User employee) {
@@ -220,22 +237,53 @@ public class ExpenseServiceImpl implements ExpenseService {
         attachmentService.deleteByLineId(lineId);
         lineRepository.delete(line);
     }
-    
+
     @Override
     @Transactional
     public ExpenseReportResponse markAsPaid(Long reportId) {
         ExpenseReport report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new RuntimeException("Note introuvable"));
-                
+
         if (report.getStatus() != ExpenseStatus.APPROVED) {
             throw new RuntimeException("Seule une note approuvée peut être marquée comme payée");
         }
-        
+
         report.setStatus(ExpenseStatus.PAID);
         return mapToReportResponse(reportRepository.save(report));
     }
 
+    private void validateAmount(java.math.BigDecimal amount) {
+        if (amount == null || amount.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Le montant d'une ligne de frais doit être supérieur à 0");
+        }
+    }
+
+    private void validateReportDates(java.time.LocalDate dateFrom, java.time.LocalDate dateTo) {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        if (dateFrom != null && dateFrom.isAfter(today)) {
+            throw new RuntimeException("La date de début de la note de frais ne peut pas être dans le futur");
+        }
+        if (dateTo != null && dateTo.isAfter(today)) {
+            throw new RuntimeException("La date de fin de la note de frais ne peut pas être dans le futur");
+        }
+        if (dateFrom != null && dateTo != null && dateFrom.isAfter(dateTo)) {
+            throw new RuntimeException("La date de début de la note de frais ne peut pas être supérieure à la date de fin");
+        }
+    }
+
+    private void validateLineDate(java.time.LocalDate lineDate, java.time.LocalDate reportDate) {
+        if (lineDate == null || (reportDate != null && lineDate.isBefore(reportDate))) {
+            throw new RuntimeException(
+                    "La date de la ligne de frais doit être supérieure ou égale à la date de début de la note");
+        }
+        if (lineDate.isAfter(java.time.LocalDate.now())) {
+            throw new RuntimeException("La date de la ligne de frais ne peut pas être dans le futur");
+        }
+    }
+
     private ExpenseLine buildLine(ExpenseLineRequest request, ExpenseReport report) {
+        validateAmount(request.getAmount());
+        validateLineDate(request.getExpenseDate(), report.getDateFrom());
         ExpenseLine line = new ExpenseLine();
         line.setExpenseDate(request.getExpenseDate());
         line.setDescription(request.getDescription());
@@ -268,7 +316,8 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     private boolean canApprove(User user, ExpenseReport report) {
         WorkflowStep step = report.getCurrentStep();
-        if (step == null || user.getRole() != step.getRequiredRole()) return false;
+        if (step == null || user.getRole() != step.getRequiredRole())
+            return false;
 
         if (user.getRole() == RoleType.MANAGER) {
             return user.getDepartment() != null
@@ -277,7 +326,7 @@ public class ExpenseServiceImpl implements ExpenseService {
         }
         return true;
     }
-    
+
     private ExpenseReportResponse mapToReportResponse(ExpenseReport report) {
         ExpenseReportResponse response = new ExpenseReportResponse();
         response.setId(report.getId());
@@ -289,10 +338,13 @@ public class ExpenseServiceImpl implements ExpenseService {
         response.setStatus(report.getStatus());
         response.setRejectionReason(report.getRejectionReason());
         response.setRejectedAtStepName(report.getRejectedAtStepName());
-        
+
         if (report.getEmployee() != null) {
             response.setEmployeeId(report.getEmployee().getId());
             response.setEmployeeName(report.getEmployee().getName());
+            if (report.getEmployee().getRole() != null) {
+                response.setEmployeeRole(report.getEmployee().getRole().name());
+            }
             if (report.getEmployee().getDepartment() != null) {
                 response.setEmployeeDepartmentName(report.getEmployee().getDepartment().getName());
             }
@@ -302,9 +354,10 @@ public class ExpenseServiceImpl implements ExpenseService {
             response.setCurrentStepRole(report.getCurrentStep().getRequiredRole().name());
             response.setCurrentStepName(report.getCurrentStep().getActionName());
         }
-        
+
         if (report.getLines() != null) {
-            List<ExpenseLineResponse> lineResponses = report.getLines().stream().map(this::mapToLineResponse).collect(Collectors.toList());
+            List<ExpenseLineResponse> lineResponses = report.getLines().stream().map(this::mapToLineResponse)
+                    .collect(Collectors.toList());
             response.setLines(lineResponses);
             boolean anyOver = lineResponses.stream().anyMatch(l -> Boolean.TRUE.equals(l.getIsOverCeiling()));
             response.setIsAnyLineOverCeiling(anyOver);
@@ -313,10 +366,10 @@ public class ExpenseServiceImpl implements ExpenseService {
         if (report.getId() != null) {
             response.setAttachments(attachmentService.listByReportIdInternal(report.getId()));
         }
-        
+
         return response;
     }
-    
+
     private ExpenseLineResponse mapToLineResponse(ExpenseLine line) {
         ExpenseLineResponse response = new ExpenseLineResponse();
         response.setId(line.getId());
@@ -325,7 +378,7 @@ public class ExpenseServiceImpl implements ExpenseService {
         response.setAmount(line.getAmount());
         response.setItineraryFrom(line.getItineraryFrom());
         response.setItineraryTo(line.getItineraryTo());
-        
+
         if (line.getCategory() != null) {
             response.setCategoryId(line.getCategory().getId());
             response.setCategoryName(line.getCategory().getName());
@@ -334,7 +387,8 @@ public class ExpenseServiceImpl implements ExpenseService {
                 boolean over = line.getAmount().compareTo(line.getCategory().getMaxAmount()) > 0;
                 response.setIsOverCeiling(over);
                 if (over) {
-                    response.setCeilingWarningMessage("Plafond recommandé de " + line.getCategory().getMaxAmount() + " € dépassé (" + line.getAmount() + " €)");
+                    response.setCeilingWarningMessage("Plafond recommandé de " + line.getCategory().getMaxAmount()
+                            + " FCFA dépassé (" + line.getAmount() + " FCFA)");
                 }
             } else {
                 response.setIsOverCeiling(false);
@@ -344,7 +398,7 @@ public class ExpenseServiceImpl implements ExpenseService {
         if (line.getId() != null) {
             response.setAttachments(attachmentService.listByLineIdInternal(line.getId()));
         }
-        
+
         return response;
     }
 }

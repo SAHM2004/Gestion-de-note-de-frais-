@@ -4,9 +4,11 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Data
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 @Entity
 @Table(name = "etapes_workflow")
 public class WorkflowStep {
+    public WorkflowStep() {}
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

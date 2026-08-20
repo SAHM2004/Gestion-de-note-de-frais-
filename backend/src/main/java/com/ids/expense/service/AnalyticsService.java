@@ -21,12 +21,26 @@ public class AnalyticsService {
     private final ExpenseReportRepository reportRepository;
     private final UserRepository userRepository;
 
-    public AnalyticsSummaryResponse getSummary(UserDetailsImpl currentUser, Long departmentIdFilter) {
+    public AnalyticsSummaryResponse getSummary(UserDetailsImpl currentUser, Long departmentIdFilter, Integer year, Integer month) {
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
         List<ExpenseReport> allReports = reportRepository.findAll();
         List<ExpenseReport> scoped = filterByRole(allReports, user, departmentIdFilter);
+
+        // Appliquer les filtres d'année et de mois
+        if (year != null || month != null) {
+            final Integer yFilter = year;
+            final Integer mFilter = month;
+            scoped = scoped.stream()
+                    .filter(r -> {
+                        if (r.getDateFrom() == null) return false;
+                        boolean matchYear = (yFilter == null || r.getDateFrom().getYear() == yFilter);
+                        boolean matchMonth = (mFilter == null || r.getDateFrom().getMonthValue() == mFilter);
+                        return matchYear && matchMonth;
+                    })
+                    .collect(Collectors.toList());
+        }
 
         AnalyticsSummaryResponse response = new AnalyticsSummaryResponse();
         response.setScope(buildScopeLabel(user, departmentIdFilter));
@@ -50,6 +64,34 @@ public class AnalyticsService {
         return response;
     }
 
+    /**
+     * Statistiques personnelles : uniquement les notes soumises PAR l'utilisateur connecté,
+     * quel que soit son rôle (Manager, DT, DG, Comptable…).
+     */
+    public AnalyticsSummaryResponse getPersonalSummary(UserDetailsImpl currentUser) {
+        User user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        // Filtrer uniquement les notes dont l'employé est l'utilisateur lui-même
+        List<ExpenseReport> myReports = reportRepository.findAll().stream()
+                .filter(r -> r.getEmployee().getId().equals(user.getId()))
+                .collect(Collectors.toList());
+
+        AnalyticsSummaryResponse response = new AnalyticsSummaryResponse();
+        response.setScope("Mes notes de frais");
+
+        response.setTotalSubmitted(sumByStatus(myReports,
+                ExpenseStatus.IN_PROGRESS, ExpenseStatus.APPROVED, ExpenseStatus.PAID, ExpenseStatus.REJECTED));
+        response.setTotalPending(sumByStatus(myReports, ExpenseStatus.IN_PROGRESS));
+        response.setTotalApproved(sumByStatus(myReports, ExpenseStatus.APPROVED));
+        response.setTotalPaid(sumByStatus(myReports, ExpenseStatus.PAID));
+        response.setTotalRejected(sumByStatus(myReports, ExpenseStatus.REJECTED));
+        response.setRejectionRatePercent(calculateRejectionRate(myReports));
+        response.setTopCategories(buildTopCategories(myReports));
+
+        return response;
+    }
+
     private boolean isTechnicalDepartment(Department dept) {
         if (dept == null || dept.getName() == null) return false;
         String name = dept.getName().toUpperCase();
@@ -59,7 +101,7 @@ public class AnalyticsService {
     private List<ExpenseReport> filterByRole(List<ExpenseReport> all, User user, Long departmentIdFilter) {
         RoleType role = user.getRole();
         
-        if (role == RoleType.GENERAL_DIRECTOR || role == RoleType.ACCOUNTANT) {
+        if (role == RoleType.GENERAL_DIRECTOR) {
             if (departmentIdFilter != null) {
                 return all.stream()
                         .filter(r -> r.getEmployee().getDepartment() != null
@@ -118,9 +160,9 @@ public class AnalyticsService {
     private List<DepartmentExpenseStat> buildDepartmentStats(List<ExpenseReport> reports) {
         Map<String, DepartmentExpenseStat> map = new LinkedHashMap<>();
         for (ExpenseReport r : reports) {
-            if (r.getStatus() == ExpenseStatus.DRAFT) continue;
-            String deptName = r.getEmployee().getDepartment() != null
-                    ? r.getEmployee().getDepartment().getName() : "Non assigné";
+            if (r.getStatus() == ExpenseStatus.DRAFT || r.getStatus() == ExpenseStatus.REJECTED) continue;
+            User emp = userRepository.findById(r.getEmployee().getId()).orElse(r.getEmployee());
+            String deptName = emp.getDepartment() != null ? emp.getDepartment().getName() : "Non assigné";
             DepartmentExpenseStat stat = map.computeIfAbsent(deptName, k -> {
                 DepartmentExpenseStat s = new DepartmentExpenseStat();
                 s.setDepartmentName(deptName);
@@ -176,12 +218,13 @@ public class AnalyticsService {
         Map<String, EmployeeExpenseStat> map = new HashMap<>();
         for (ExpenseReport r : reports) {
             if (r.getStatus() == ExpenseStatus.DRAFT || r.getStatus() == ExpenseStatus.REJECTED) continue;
-            String key = r.getEmployee().getEmail();
+            User emp = userRepository.findById(r.getEmployee().getId()).orElse(r.getEmployee());
+            String key = emp.getEmail();
             EmployeeExpenseStat stat = map.computeIfAbsent(key, k -> {
                 EmployeeExpenseStat s = new EmployeeExpenseStat();
-                s.setEmployeeName(r.getEmployee().getName());
-                s.setDepartmentName(r.getEmployee().getDepartment() != null
-                        ? shortDeptName(r.getEmployee().getDepartment().getName()) : "-");
+                s.setEmployeeName(emp.getName());
+                s.setDepartmentName(emp.getDepartment() != null
+                        ? shortDeptName(emp.getDepartment().getName()) : "-");
                 s.setTotal(BigDecimal.ZERO);
                 return s;
             });
@@ -201,6 +244,7 @@ public class AnalyticsService {
     }
 
     private String shortDeptName(String name) {
+        if (name == null) return "Non assigné";
         if (name.contains("ALVANET")) return "ALVANET";
         if (name.contains("SLF")) return "SLF";
         if (name.contains("SCR")) return "SCR";
@@ -208,7 +252,7 @@ public class AnalyticsService {
         if (name.contains("RH")) return "RH";
         if (name.contains("Logistique")) return "Logistique";
         if (name.contains("Commerciaux")) return "Commerciaux";
-        return name.length() > 20 ? name.substring(0, 18) + "…" : name;
+        return name.length() > 25 ? name.substring(0, 23) + "…" : name;
     }
 
     private BigDecimal calculatePendingForUser(List<ExpenseReport> scoped, User user) {

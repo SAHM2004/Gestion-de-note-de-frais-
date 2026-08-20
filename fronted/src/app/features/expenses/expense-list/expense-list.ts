@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, inject, computed, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterModule } from '@angular/router';
 import { ExpenseService } from '../../../core/services/expense.service';
@@ -11,11 +11,15 @@ import { AttachmentService } from '../../../core/services/attachment.service';
   imports: [CommonModule, RouterLink, RouterModule],
   templateUrl: './expense-list.html'
 })
-export class ExpenseListComponent {
+export class ExpenseListComponent implements OnInit {
   public expenseService = inject(ExpenseService);
   public authService = inject(AuthService);
   private router = inject(Router);
   public attachmentService = inject(AttachmentService);
+
+  ngOnInit() {
+    this.expenseService.refreshExpenses().subscribe();
+  }
 
   public createExpense() {
     this.router.navigate(['/expenses/new']);
@@ -102,20 +106,28 @@ export class ExpenseListComponent {
   }
 
   public getWorkflowStepsForReport(report: ExpenseReport) {
-    const isTechnical = report.employee.department?.name.toLowerCase().includes('info') || report.employee.department?.name.toLowerCase().includes('tech');
-    
-    const stepsConfig = isTechnical 
-      ? [
-          { name: 'Validation Manager', role: 'MANAGER' },
-          { name: 'Validation Directeur Technique', role: 'TECHNICAL_DIRECTOR' },
-          { name: 'Validation Directeur Général', role: 'GENERAL_DIRECTOR' },
-          { name: 'Validation Comptabilité', role: 'ACCOUNTANT' }
-        ]
-      : [
-          { name: 'Validation Manager', role: 'MANAGER' },
-          { name: 'Validation Directeur Général', role: 'GENERAL_DIRECTOR' },
-          { name: 'Validation Comptabilité', role: 'ACCOUNTANT' }
-        ];
+    let stepsConfig = [
+      { name: 'Validation Manager', role: 'MANAGER' },
+      { name: 'Validation Directeur Technique', role: 'TECHNICAL_DIRECTOR' },
+      { name: 'Validation Directeur Général', role: 'GENERAL_DIRECTOR' },
+      { name: 'Validation Comptabilité', role: 'ACCOUNTANT' }
+    ];
+
+    const deptName = report.employee.department?.name ?? '';
+    const isTechnical = deptName.includes('ALVANET') || deptName.includes('SLF') || deptName.includes('SCR');
+    if (!isTechnical) {
+      stepsConfig = stepsConfig.filter(s => s.role !== 'TECHNICAL_DIRECTOR');
+    }
+
+    const employeeRole = report.employee.role;
+
+    if (employeeRole === 'GENERAL_DIRECTOR') {
+      stepsConfig = stepsConfig.filter(s => !['MANAGER', 'TECHNICAL_DIRECTOR', 'GENERAL_DIRECTOR'].includes(s.role));
+    } else if (employeeRole === 'TECHNICAL_DIRECTOR') {
+      stepsConfig = stepsConfig.filter(s => !['MANAGER', 'TECHNICAL_DIRECTOR'].includes(s.role));
+    } else if (employeeRole === 'MANAGER') {
+      stepsConfig = stepsConfig.filter(s => s.role !== 'MANAGER');
+    }
 
     if (report.status === ExpenseStatus.DRAFT) {
       return stepsConfig.map(s => ({ ...s, status: 'pending' }));

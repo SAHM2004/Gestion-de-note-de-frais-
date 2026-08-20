@@ -52,62 +52,18 @@ export class ExpenseCreate implements OnInit {
   public showConfirmModal = signal(false);
   public showSuccessModal = signal(false);
   public showDeleteModal = signal(false);
-  
+
   public modalTitle = signal('');
   public modalMessage = signal('');
   public successTitle = signal('');
   public successMessage = signal('');
+  public showErrorModal = signal(false);
+  public errorModalMessage = signal('');
   public pendingStatus = signal<ExpenseStatus | null>(null);
   public deleteTarget = signal<{ type: 'line' | 'attachment'; id: any } | null>(null);
   private nextLineLocalId = 1;
 
   public attachmentError: string | null = null;
-  public isScanningOcr = signal(false);
-  public ocrSuccessMessage = signal<string | null>(null);
-  public ocrErrorMessage = signal<string | null>(null);
-
-  public triggerOcrScan(fileInput: HTMLInputElement, line: TempLine) {
-    const file = fileInput.files?.[0];
-    if (!file) return;
-
-    this.isScanningOcr.set(true);
-    this.ocrSuccessMessage.set(null);
-    this.ocrErrorMessage.set(null);
-
-    this.expenseService.scanOcrReceipt(file).subscribe({
-      next: (res) => {
-        this.isScanningOcr.set(false);
-
-        if (res.isValidReceipt === false) {
-          this.ocrErrorMessage.set(res.errorMessage || "⚠️ Le document téléversé n'est pas un reçu ou une facture valide.");
-          this.ocrSuccessMessage.set(null);
-          setTimeout(() => this.ocrErrorMessage.set(null), 6000);
-          return;
-        }
-
-        this.ocrErrorMessage.set(null);
-        if (res.extractedAmount) {
-          line.amount = res.extractedAmount;
-        }
-        if (res.extractedDate) {
-          line.expenseDate = res.extractedDate;
-        }
-        if (res.suggestedCategoryId) {
-          line.categoryId = String(res.suggestedCategoryId);
-        }
-        if (res.merchantName) {
-          line.description = `${res.merchantName} - Frais scanné par OCR`;
-        }
-        this.ocrSuccessMessage.set(`Scan réussi (${res.confidenceScore ?? 85}% de confiance) ! Champs pré-remplis.`);
-        setTimeout(() => this.ocrSuccessMessage.set(null), 4000);
-      },
-      error: (err) => {
-        this.isScanningOcr.set(false);
-        this.ocrErrorMessage.set("⚠️ Impossible d'analyser ce fichier. Veuillez fournir un reçu valide.");
-        setTimeout(() => this.ocrErrorMessage.set(null), 6000);
-      }
-    });
-  }
 
   constructor() {
   }
@@ -126,19 +82,39 @@ export class ExpenseCreate implements OnInit {
   public get workflowSteps(): { name: string; role: RoleType }[] {
     const deptName = this.authService.currentUser()?.department?.name ?? '';
     const isTechnical = this.adminData.isTechnicalDepartment({ id: 0, name: deptName });
-    if (isTechnical) {
-      return [
-        { name: 'Validation Manager', role: RoleType.MANAGER },
-        { name: 'Validation Directeur Technique', role: RoleType.TECHNICAL_DIRECTOR },
-        { name: 'Validation Directeur Général', role: RoleType.GENERAL_DIRECTOR },
-        { name: 'Validation Comptabilité', role: RoleType.ACCOUNTANT },
-      ];
-    }
-    return [
+    const userRole = this.authService.currentUser()?.role;
+
+    let allSteps: { name: string; role: RoleType }[] = [
       { name: 'Validation Manager', role: RoleType.MANAGER },
+      { name: 'Validation Directeur Technique', role: RoleType.TECHNICAL_DIRECTOR },
       { name: 'Validation Directeur Général', role: RoleType.GENERAL_DIRECTOR },
       { name: 'Validation Comptabilité', role: RoleType.ACCOUNTANT },
     ];
+
+    if (!isTechnical) {
+      allSteps = allSteps.filter(s => s.role !== RoleType.TECHNICAL_DIRECTOR);
+    }
+
+    // Filtrer les étapes que l'utilisateur auto-valide (identique à canAutoApprove backend)
+    return allSteps.filter(step => {
+      if (userRole === RoleType.GENERAL_DIRECTOR) {
+        // Le DG saute Manager, DT et DG → ne voit que Comptable
+        return step.role !== RoleType.MANAGER
+          && step.role !== RoleType.TECHNICAL_DIRECTOR
+          && step.role !== RoleType.GENERAL_DIRECTOR;
+      }
+      if (userRole === RoleType.TECHNICAL_DIRECTOR) {
+        // Le DT saute Manager et DT → voit DG et Comptable
+        return step.role !== RoleType.MANAGER
+          && step.role !== RoleType.TECHNICAL_DIRECTOR;
+      }
+      if (userRole === RoleType.MANAGER) {
+        // Le Manager saute Manager → voit DT, DG et Comptable
+        return step.role !== RoleType.MANAGER;
+      }
+
+      return true;
+    });
   }
 
   private loadExistingReport(id: number) {
@@ -166,7 +142,11 @@ export class ExpenseCreate implements OnInit {
       this.expenseService.refreshExpenses().subscribe(() => {
         const r = this.expenseService.getExpensesForUser().find(r => r.id === id);
         if (r) { this.loadExistingReport(id); }
-        else { alert('Note de frais introuvable'); this.router.navigate(['/dashboard']); }
+        else {
+          this.errorModalMessage.set('Note de frais introuvable');
+          this.showErrorModal.set(true);
+          this.router.navigate(['/dashboard']);
+        }
       });
     }
   }
@@ -177,7 +157,7 @@ export class ExpenseCreate implements OnInit {
       expenseDate: new Date().toISOString().substring(0, 10),
       categoryId: this.categories()[0]?.id?.toString() || '1',
       description: '',
-      amount: 50,
+      amount: 0,
     });
   }
 
@@ -190,9 +170,21 @@ export class ExpenseCreate implements OnInit {
         expenseDate: new Date().toISOString().substring(0, 10),
         categoryId: this.categories()[0]?.id?.toString() || '1',
         description: '',
-        amount: 50,
+        amount: 0,
       };
     }
+  }
+
+  /** Retourne le plafond (maxAmount) de la catégorie sélectionnée, ou null si sans limite */
+  public getCategoryMaxAmount(categoryId: string): number | null {
+    const cat = this.categories().find(c => String(c.id) === String(categoryId));
+    return cat?.maxAmount ?? null;
+  }
+
+  /** Retourne le nom de la catégorie par son id */
+  public getCategoryName(categoryId: string): string {
+    const cat = this.categories().find(c => String(c.id) === String(categoryId));
+    return cat?.name ?? categoryId;
   }
 
   public getLineAttachments(lineIndex: number): any[] {
@@ -201,11 +193,11 @@ export class ExpenseCreate implements OnInit {
       (line.lineId != null && a.lineId === line.lineId) || ((a as any).lineIndex === line.localId)
     );
     const pending = this.pendingAttachments.filter(a => a.localLineId === line.localId).map(p => ({
-       id: 'pending_' + p.localId,
-       originalFileName: p.file.name,
-       fileSize: p.file.size,
-       contentType: p.file.type,
-       isPending: true
+      id: 'pending_' + p.localId,
+      originalFileName: p.file.name,
+      fileSize: p.file.size,
+      contentType: p.file.type,
+      isPending: true
     }));
     return [...existing, ...pending];
   }
@@ -260,7 +252,7 @@ export class ExpenseCreate implements OnInit {
       this.pendingAttachments = this.pendingAttachments.filter(p => p.localId !== localId);
       return;
     }
-    
+
     this.attachmentService.deleteAttachment(id as number).subscribe({
       next: () => {
         this.reportAttachments = this.reportAttachments.filter(a => a.id !== id);
@@ -280,11 +272,11 @@ export class ExpenseCreate implements OnInit {
   public get globalAttachments(): any[] {
     const existing = this.reportAttachments.filter(a => !a.lineId && a.lineIndex == null);
     const pending = this.pendingAttachments.filter(a => a.localLineId == null).map(p => ({
-       id: 'pending_' + p.localId,
-       originalFileName: p.file.name,
-       fileSize: p.file.size,
-       contentType: p.file.type,
-       isPending: true
+      id: 'pending_' + p.localId,
+      originalFileName: p.file.name,
+      fileSize: p.file.size,
+      contentType: p.file.type,
+      isPending: true
     }));
     return [...existing, ...pending];
   }
@@ -301,14 +293,84 @@ export class ExpenseCreate implements OnInit {
     this.attachmentError = null;
 
     if (!this.title.trim()) {
-      alert('Veuillez donner un nom à votre note de frais.');
+      this.errorModalMessage.set('Veuillez donner un nom (titre) à votre note de frais.');
+      this.showErrorModal.set(true);
+      return;
+    }
+
+    if (!this.description.trim()) {
+      this.errorModalMessage.set('Veuillez fournir une description pour votre note de frais.');
+      this.showErrorModal.set(true);
+      return;
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    if (this.dateFrom && this.dateFrom > todayStr) {
+      this.errorModalMessage.set(`La date de début de la note de frais (${this.dateFrom}) ne peut pas être dans le futur.`);
+      this.showErrorModal.set(true);
+      return;
+    }
+
+    if (this.dateTo && this.dateTo > todayStr) {
+      this.errorModalMessage.set(`La date de fin de la note de frais (${this.dateTo}) ne peut pas être dans le futur.`);
+      this.showErrorModal.set(true);
+      return;
+    }
+
+    if (this.dateFrom && this.dateTo && this.dateFrom > this.dateTo) {
+      this.errorModalMessage.set(`La date de début de la note de frais (${this.dateFrom}) ne peut pas être supérieure à la date de fin (${this.dateTo}).`);
+      this.showErrorModal.set(true);
       return;
     }
 
     for (let i = 0; i < this.lines.length; i++) {
-      const amt = this.lines[i].amount;
-      if (amt == null || amt < 50) {
-        alert(`La ligne ${i + 1} a un montant invalide. Le montant doit être d'au moins 50 FCFA.`);
+      const line = this.lines[i];
+      const amt = line.amount;
+
+      if (!line.description?.trim()) {
+        this.errorModalMessage.set(`Ligne ${i + 1} :\nVeuillez fournir une description pour cette dépense.`);
+        this.showErrorModal.set(true);
+        return;
+      }
+
+      // Vérification date de dépense
+      if (!line.expenseDate) {
+        this.errorModalMessage.set(`Ligne ${i + 1} — "${line.description || 'Sans description'}" :\nLa date de la dépense est obligatoire.`);
+        this.showErrorModal.set(true);
+        return;
+      }
+
+      if (line.expenseDate > todayStr) {
+        this.errorModalMessage.set(`Ligne ${i + 1} — "${line.description || 'Sans description'}" :\nLa date de la dépense ne peut pas être dans le futur.`);
+        this.showErrorModal.set(true);
+        return;
+      }
+
+      if (this.dateFrom && line.expenseDate < this.dateFrom) {
+        this.errorModalMessage.set(`Ligne ${i + 1} — "${line.description || 'Sans description'}" :\nLa date de la dépense (${line.expenseDate}) doit être supérieure ou égale à la date de début de la note de frais (${this.dateFrom}).`);
+        this.showErrorModal.set(true);
+        return;
+      }
+
+      // Vérification montant minimum
+      if (amt == null || amt <= 0) {
+        this.errorModalMessage.set(`Ligne ${i + 1} — "${line.description || 'Sans description'}" :\nLe montant doit être supérieur à 0 FCFA.`);
+        this.showErrorModal.set(true);
+        return;
+      }
+
+      // Vérification du plafond de la catégorie
+      const maxAmount = this.getCategoryMaxAmount(line.categoryId);
+      if (maxAmount !== null && amt > maxAmount) {
+        const catName = this.getCategoryName(line.categoryId);
+        this.errorModalMessage.set(
+          `Vous avez dépassé le plafond pour la catégorie "${catName}".\n\n` +
+          `Plafond autorisé : ${maxAmount.toLocaleString('de-DE')} FCFA\n` +
+          `Montant saisi    : ${amt.toLocaleString('de-DE')} FCFA\n\n` +
+          `Veuillez réduire le montant de la ligne ${i + 1} avant d'enregistrer.`
+        );
+        this.showErrorModal.set(true);
         return;
       }
     }
@@ -328,10 +390,17 @@ export class ExpenseCreate implements OnInit {
     this.showConfirmModal.set(false);
   }
 
+  public closeErrorModal() {
+    this.showErrorModal.set(false);
+  }
+
+  public isSubmitting = signal(false);
+
   public executeSubmit() {
-    this.showConfirmModal.set(false);
     const status = this.pendingStatus();
     if (!status) return;
+
+    this.isSubmitting.set(true);
 
     const reportData = {
       title: this.title,
@@ -346,7 +415,11 @@ export class ExpenseCreate implements OnInit {
           await this.uploadPendingAttachments(updated);
           this.finalizeSubmit(updated.id, status);
         },
-        error: (err) => alert('Erreur : ' + (err.error?.message ?? err.message))
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.errorModalMessage.set('Erreur : ' + (err.error?.message ?? err.message));
+          this.showErrorModal.set(true);
+        }
       });
     } else {
       this.expenseService.saveExpenseReport(reportData, this.lines).subscribe({
@@ -354,7 +427,11 @@ export class ExpenseCreate implements OnInit {
           await this.uploadPendingAttachments(created);
           this.finalizeSubmit(created.id, status);
         },
-        error: (err) => alert('Erreur : ' + (err.error?.message ?? err.message))
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.errorModalMessage.set('Erreur : ' + (err.error?.message ?? err.message));
+          this.showErrorModal.set(true);
+        }
       });
     }
   }
@@ -372,7 +449,7 @@ export class ExpenseCreate implements OnInit {
       }
       try {
         await this.attachmentService.addAttachment(report.id, pending.file, targetLineId);
-      } catch(e) {
+      } catch (e) {
         console.error("Erreur upload pièce jointe", e);
       }
     }
@@ -380,33 +457,53 @@ export class ExpenseCreate implements OnInit {
   }
 
   private finalizeSubmit(reportId: number, status: ExpenseStatus) {
-    this.expenseService.refreshExpenses().subscribe({
-      next: () => {
-        if (status === ExpenseStatus.IN_PROGRESS) {
-          this.expenseService.submitDraftReport(reportId).subscribe({
+    if (status === ExpenseStatus.IN_PROGRESS) {
+      this.expenseService.submitDraftReport(reportId).subscribe({
+        next: () => {
+          this.expenseService.refreshExpenses().subscribe({
             next: () => {
+              this.isSubmitting.set(false);
+              this.showConfirmModal.set(false);
               this.successTitle.set('Note de frais soumise !');
               this.successMessage.set('Votre note de frais a été transmise avec succès dans le circuit de validation.');
               this.showSuccessModal.set(true);
             },
-            error: (err) => alert('Erreur lors de la soumission : ' + (err.error?.message ?? err.message))
+            error: (err) => {
+              this.isSubmitting.set(false);
+              this.showConfirmModal.set(false);
+              console.error('Erreur lors de l\'actualisation des notes', err);
+              this.router.navigate(['/expenses/list']);
+            }
           });
-        } else {
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.errorModalMessage.set('Erreur lors de la soumission : ' + (err.error?.message ?? err.message));
+          this.showErrorModal.set(true);
+        }
+      });
+    } else {
+      this.expenseService.refreshExpenses().subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          this.showConfirmModal.set(false);
           this.successTitle.set('Brouillon enregistré !');
           this.successMessage.set('Votre note de frais a été enregistrée comme brouillon avec succès.');
           this.showSuccessModal.set(true);
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.showConfirmModal.set(false);
+          console.error('Erreur lors de l\'actualisation des notes', err);
+          this.router.navigate(['/expenses/list']);
         }
-      },
-      error: (err) => {
-        console.error('Erreur lors de l\'actualisation des notes', err);
-        this.router.navigate(['/expenses']);
-      }
-    });
+      });
+    }
   }
 
   public goToExpenses() {
     this.showSuccessModal.set(false);
-    this.router.navigate(['/expenses']);
+    this.router.navigate(['/expenses/list']);
   }
 
   public cancel() {

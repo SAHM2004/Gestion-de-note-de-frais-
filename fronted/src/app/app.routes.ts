@@ -8,6 +8,7 @@ import { ApprovalList } from './features/approvals/approval-list/approval-list';
 import { FinancialDashboard } from './features/analytics/financial-dashboard/financial-dashboard';
 import { Settings } from './features/admin/settings/settings';
 import { ProfileComponent } from './features/profile/profile';
+import { ForcePasswordChangeComponent } from './features/auth/force-password-change/force-password-change';
 import { authGuard } from './core/guards/auth.guard';
 import { RoleType } from './core/models/models';
 
@@ -20,9 +21,11 @@ export const routes: Routes = [
         path: '',
         component: MainLayoutComponent,
         canActivate: [authGuard],
+        canActivateChild: [authGuard],
         children: [
             { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
             { path: 'dashboard', component: DashboardComponent },
+            { path: 'force-password-change', component: ForcePasswordChangeComponent },
             { path: 'profile', component: ProfileComponent },
             { 
                 path: 'expenses/list', 
@@ -47,7 +50,7 @@ export const routes: Routes = [
             { 
                 path: 'analytics', 
                 component: FinancialDashboard,
-                data: { roles: [RoleType.MANAGER, RoleType.TECHNICAL_DIRECTOR, RoleType.GENERAL_DIRECTOR, RoleType.ACCOUNTANT] }
+                data: { roles: [RoleType.MANAGER, RoleType.TECHNICAL_DIRECTOR, RoleType.GENERAL_DIRECTOR] }
             },
             { 
                 path: 'admin/users', 

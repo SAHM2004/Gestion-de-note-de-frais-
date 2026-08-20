@@ -10,6 +10,9 @@ export interface AuthResponse {
   name: string;
   email: string;
   role: string;
+  requirePasswordChange?: boolean;
+  departmentId?: number;
+  departmentName?: string;
 }
 
 export interface UserProfileResponse {
@@ -30,6 +33,12 @@ export class AuthService {
   public currentUser = this.currentUserSignal.asReadonly();
   public isLoggedIn = computed(() => this.currentUserSignal() !== null);
   public userRole = computed(() => this.currentUserSignal()?.role ?? null);
+  public requirePasswordChange = computed(() => {
+    const user = this.currentUserSignal();
+    if (!user) return false;
+    if (user.role === RoleType.ADMIN) return false;
+    return user.requirePasswordChange ?? false;
+  });
 
   constructor(private http: HttpClient) {
     this.loadSession();
@@ -56,13 +65,14 @@ export class AuthService {
           id: response.id,
           name: response.name,
           email: response.email,
-          role: response.role as RoleType
+          role: response.role as RoleType,
+          requirePasswordChange: response.requirePasswordChange,
+          department: response.departmentId ? { id: response.departmentId, name: response.departmentName ?? '' } : undefined
         };
         sessionStorage.setItem('ids_current_user', JSON.stringify(user));
         this.currentUserSignal.set(user);
       }),
-      map(() => true),
-      catchError(() => of(false))
+      map(() => true)
     );
   }
 

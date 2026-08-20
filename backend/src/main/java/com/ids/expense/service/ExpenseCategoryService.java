@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -28,11 +29,13 @@ public class ExpenseCategoryService {
 
     @Transactional
     public ExpenseCategory createCategory(ExpenseCategory category) {
+        validateMaxAmount(category);
         return expenseCategoryRepository.save(category);
     }
 
     @Transactional
     public ExpenseCategory updateCategory(Long id, ExpenseCategory categoryDetails) {
+        validateMaxAmount(categoryDetails);
         ExpenseCategory category = getCategoryById(id);
         category.setName(categoryDetails.getName());
         category.setCode(categoryDetails.getCode());
@@ -45,5 +48,15 @@ public class ExpenseCategoryService {
     public void deleteCategory(Long id) {
         ExpenseCategory category = getCategoryById(id);
         expenseCategoryRepository.delete(category);
+    }
+
+    private void validateMaxAmount(ExpenseCategory category) {
+        if (category.getMaxAmount() == null) return; // plafond facultatif
+        if (category.getMaxAmount().compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("Le plafond ne peut pas être négatif.");
+        }
+        if (category.getMaxAmount().compareTo(new BigDecimal("50")) < 0) {
+            throw new RuntimeException("Le plafond doit être d'au moins 50 FCFA.");
+        }
     }
 }

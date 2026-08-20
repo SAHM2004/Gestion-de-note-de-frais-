@@ -31,7 +31,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AttachmentService {
 
-    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".pdf", ".jpg", ".jpeg", ".png");
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
+            ".pdf", ".jpg", ".jpeg", ".pjpeg", ".png", ".webp", ".bmp", ".tiff", ".tif", ".heic", ".heif", ".doc", ".docx"
+    );
 
     private final ExpenseAttachmentRepository attachmentRepository;
     private final ExpenseReportRepository reportRepository;

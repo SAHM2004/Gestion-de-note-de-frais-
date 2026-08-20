@@ -1,6 +1,7 @@
 package com.ids.expense.service;
 
 import com.ids.expense.common.models.Department;
+import com.ids.expense.common.models.RoleType;
 import com.ids.expense.common.models.User;
 import com.ids.expense.common.models.WorkflowTemplate;
 import com.ids.expense.common.repository.DepartmentRepository;
@@ -34,13 +35,18 @@ public class DepartmentService {
 
     @Transactional
     public Department createDepartment(Department department) {
+        User manager = null;
         if (department.getManager() != null && department.getManager().getId() != null) {
-            User manager = userRepository.findById(department.getManager().getId())
+            manager = userRepository.findById(department.getManager().getId())
                     .orElseThrow(() -> new RuntimeException("Utilisateur (manager) introuvable avec l'ID: " + department.getManager().getId()));
-            department.setManager(manager);
-        } else {
-            department.setManager(null);
+
+            departmentRepository.findByManagerId(manager.getId()).ifPresent(otherDept -> {
+                otherDept.setManager(null);
+                departmentRepository.save(otherDept);
+            });
+            manager.setRole(RoleType.MANAGER);
         }
+        department.setManager(null);
 
         if (department.getDefaultWorkflowTemplate() != null && department.getDefaultWorkflowTemplate().getId() != null) {
             WorkflowTemplate template = workflowTemplateRepository.findById(department.getDefaultWorkflowTemplate().getId())
@@ -50,21 +56,53 @@ public class DepartmentService {
             department.setDefaultWorkflowTemplate(null);
         }
 
-        return departmentRepository.save(department);
+        Department savedDepartment = departmentRepository.save(department);
+        if (manager != null) {
+            savedDepartment.setManager(manager);
+            manager.setDepartment(savedDepartment);
+            userRepository.save(manager);
+            savedDepartment = departmentRepository.save(savedDepartment);
+        }
+        return savedDepartment;
     }
 
     @Transactional
     public Department updateDepartment(Long id, Department departmentDetails) {
         Department department = getDepartmentById(id);
+        User oldManager = department.getManager();
+
         if (departmentDetails.getName() != null) {
             department.setName(departmentDetails.getName());
         }
 
         if (departmentDetails.getManager() != null && departmentDetails.getManager().getId() != null) {
-            User manager = userRepository.findById(departmentDetails.getManager().getId())
+            User newManager = userRepository.findById(departmentDetails.getManager().getId())
                     .orElseThrow(() -> new RuntimeException("Utilisateur (manager) introuvable avec l'ID: " + departmentDetails.getManager().getId()));
-            department.setManager(manager);
+
+            if (oldManager != null && !oldManager.getId().equals(newManager.getId())) {
+                if (oldManager.getRole() == RoleType.MANAGER) {
+                    oldManager.setRole(RoleType.EMPLOYEE);
+                    userRepository.save(oldManager);
+                }
+            }
+
+            departmentRepository.findByManagerId(newManager.getId()).ifPresent(otherDept -> {
+                if (!otherDept.getId().equals(id)) {
+                    otherDept.setManager(null);
+                    departmentRepository.save(otherDept);
+                }
+            });
+
+            newManager.setRole(RoleType.MANAGER);
+            newManager.setDepartment(department);
+            userRepository.save(newManager);
+
+            department.setManager(newManager);
         } else {
+            if (oldManager != null && oldManager.getRole() == RoleType.MANAGER) {
+                oldManager.setRole(RoleType.EMPLOYEE);
+                userRepository.save(oldManager);
+            }
             department.setManager(null);
         }
 
@@ -82,6 +120,19 @@ public class DepartmentService {
     @Transactional
     public void deleteDepartment(Long id) {
         Department department = getDepartmentById(id);
+
+        List<User> members = userRepository.findByDepartmentId(id);
+        for (User u : members) {
+            if (u.getRole() == RoleType.MANAGER) {
+                u.setRole(RoleType.EMPLOYEE);
+            }
+            u.setDepartment(null);
+            userRepository.save(u);
+        }
+
+        department.setManager(null);
+        departmentRepository.save(department);
+
         departmentRepository.delete(department);
     }
 }

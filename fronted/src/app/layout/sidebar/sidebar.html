@@ -58,7 +58,7 @@
                         </a>
                     </li>
                 }
-                @if (authService.hasRole([RoleType.MANAGER, RoleType.TECHNICAL_DIRECTOR, RoleType.GENERAL_DIRECTOR, RoleType.ACCOUNTANT])) {
+                @if (authService.hasRole([RoleType.MANAGER, RoleType.TECHNICAL_DIRECTOR, RoleType.GENERAL_DIRECTOR])) {
                     <li>
                         <a routerLink="/analytics" routerLinkActive="border-l-4 border-secondary-container bg-primary-container text-on-primary-container" class="flex items-center gap-4 px-6 py-3 text-on-primary/70 hover:text-on-primary hover:bg-primary-fixed-dim/10 transition-all duration-200">
                             <span class="material-symbols-outlined">analytics</span>

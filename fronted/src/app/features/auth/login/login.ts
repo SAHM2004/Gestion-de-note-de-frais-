@@ -37,9 +37,13 @@ export class Login {
           this.loginError.set('Identifiants invalides. Vérifiez votre e-mail et mot de passe.');
         }
       },
-      error: () => {
+      error: (err) => {
         this.isLoading.set(false);
-        this.loginError.set('Erreur de connexion au serveur. Vérifiez que le backend est démarré.');
+        if (err.error && err.error.message) {
+          this.loginError.set(err.error.message);
+        } else {
+          this.loginError.set('Erreur de connexion au serveur. Vérifiez que le backend est démarré.');
+        }
       }
     });
   }

@@ -18,6 +18,7 @@ public class ExpenseReportResponse {
     private Long employeeId;
     private String employeeName;
     private String employeeDepartmentName;
+    private String employeeRole;
 
     private String currentStepRole;
     private String currentStepName;

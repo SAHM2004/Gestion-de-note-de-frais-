@@ -29,20 +29,21 @@ export const API_ENDPOINTS = {
   },
   categories: `${API_BASE_URL}/categories`,
   departments: `${API_BASE_URL}/departments`,
-  users: `${API_BASE_URL}/users`,
+  users: {
+    base: `${API_BASE_URL}/users`,
+    toggleActive: (id: number) => `${API_BASE_URL}/users/${id}/toggle-active`,
+  },
   references: {
     categories: `${API_BASE_URL}/references/categories`,
     workflowTemplates: `${API_BASE_URL}/references/workflow-templates`,
   },
   analytics: {
     summary: `${API_BASE_URL}/analytics/summary`,
+    personalSummary: `${API_BASE_URL}/analytics/personal-summary`,
   },
   reports: {
     pdf: (id: number) => `${API_BASE_URL}/reports/expenses/${id}/pdf`,
     csv: `${API_BASE_URL}/reports/expenses/export/csv`,
-  },
-  ocr: {
-    scan: `${API_BASE_URL}/ocr/scan`,
   },
 } as const;
 

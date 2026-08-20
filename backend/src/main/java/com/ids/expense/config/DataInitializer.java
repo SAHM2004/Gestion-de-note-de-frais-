@@ -126,29 +126,25 @@ public class DataInitializer {
             step3G.setActionName("Validation Comptabilité");
             workflowStepRepository.save(step3G);
 
-            // 3. Création des Départements
             List<String> departementsNoms = Arrays.asList(
-                    "Direction Technique - ALVANET",
-                    "Direction Technique - SLF (Service Logiciel et Formation)",
-                    "Direction Technique - SCR (Service Client et Réseau)",
-                    "Direction Générale - Comptabilité",
-                    "Direction Générale - RH",
-                    "Direction Générale - Logistique",
-                    "Direction Générale - Commerciaux"
+                    "ALVANET",
+                    "SLF (Service Logiciel et Formation)",
+                    "SCR (Service Client et Réseau)",
+                    "Comptabilité",
+                    "RH (Ressources Humaines)",
+                    "Logistique",
+                    "Commerciaux"
             );
 
             for (String nom : departementsNoms) {
-                Department dept = new Department();
-                dept.setName(nom);
-                
-                // Assigner le bon workflow selon le type de direction
-                if (nom.contains("Direction Technique")) {
-                    dept.setDefaultWorkflowTemplate(techTemplate);
+                Department d = new Department();
+                d.setName(nom);
+                if (nom.contains("ALVANET") || nom.contains("SLF") || nom.contains("SCR")) {
+                    d.setDefaultWorkflowTemplate(techTemplate);
                 } else {
-                    dept.setDefaultWorkflowTemplate(dgTemplate);
+                    d.setDefaultWorkflowTemplate(dgTemplate);
                 }
-                
-                departmentRepository.save(dept);
+                departmentRepository.save(d);
             }
 
             // 4. Création de quelques Utilisateurs de test
@@ -215,6 +211,7 @@ public class DataInitializer {
                 admin.setEmail(adminEmail);
                 admin.setPassword(passwordEncoder.encode(adminPassword));
                 admin.setRole(RoleType.ADMIN);
+                admin.setForcePasswordChange(false); // L'admin principal n'a pas besoin de changer son mot de passe
                 // L'admin n'est pas forcément lié à un département technique/opérationnel
                 userRepository.save(admin);
             }

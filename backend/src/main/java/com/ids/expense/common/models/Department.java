@@ -4,9 +4,11 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Data
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 @Entity
 @Table(name = "departements")
 public class Department {
+    public Department() {}
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -14,9 +16,9 @@ public class Department {
     private String name;
     
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "manager_id")
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("department")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"department", "password"})
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude
     private User manager;

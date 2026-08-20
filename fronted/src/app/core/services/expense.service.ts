@@ -55,7 +55,7 @@ export class ExpenseService {
       id: api.employeeId,
       name: api.employeeName,
       email: '',
-      role: RoleType.EMPLOYEE,
+      role: (api.employeeRole as RoleType) || RoleType.EMPLOYEE,
       department: api.employeeDepartmentName
         ? { id: 0, name: api.employeeDepartmentName }
         : undefined
@@ -285,12 +285,22 @@ export class ExpenseService {
     );
   }
 
-  public getAnalyticsSummary(departmentId?: number): Observable<any> {
+  public getAnalyticsSummary(departmentId?: number, year?: number, month?: number): Observable<any> {
     let params = new HttpParams();
     if (departmentId != null) {
       params = params.set('departmentId', departmentId.toString());
     }
+    if (year != null) {
+      params = params.set('year', year.toString());
+    }
+    if (month != null) {
+      params = params.set('month', month.toString());
+    }
     return this.http.get<any>(API_ENDPOINTS.analytics.summary, { params });
+  }
+
+  public getPersonalSummary(): Observable<any> {
+    return this.http.get<any>(API_ENDPOINTS.analytics.personalSummary);
   }
 
   // ------------------------------------------------------------------
@@ -335,23 +345,5 @@ export class ExpenseService {
       },
       error: err => console.error('Erreur lors du téléchargement du CSV', err)
     });
-  }
-
-  // ------------------------------------------------------------------
-  // OCR & Scan IA
-  // ------------------------------------------------------------------
-  public scanOcrReceipt(file: File): Observable<{
-    isValidReceipt?: boolean;
-    errorMessage?: string;
-    extractedAmount?: number;
-    extractedDate?: string;
-    suggestedCategoryId?: number;
-    suggestedCategoryName?: string;
-    merchantName?: string;
-    confidenceScore?: number;
-  }> {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.http.post<any>(API_ENDPOINTS.ocr.scan, formData);
   }
 }

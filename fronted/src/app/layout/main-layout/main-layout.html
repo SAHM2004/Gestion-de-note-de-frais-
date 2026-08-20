@@ -1,6 +1,11 @@
-<app-sidebar></app-sidebar>
-<main class="ml-[280px] min-h-screen flex flex-col transition-all duration-300">
-    <app-header></app-header>
+@if (!isPasswordChangeRequired) {
+    <app-sidebar></app-sidebar>
+}
+<main class="min-h-screen flex flex-col transition-all duration-300"
+      [class.ml-[280px]]="!isPasswordChangeRequired">
+    @if (!isPasswordChangeRequired) {
+        <app-header></app-header>
+    }
     
     <!-- Page Canvas -->
     <div class="flex-grow">
@@ -8,8 +13,10 @@
     </div>
 
     <!-- Footer / Copyright -->
-    <footer class="mt-auto p-[24px] text-center border-t border-outline-variant bg-surface-container-low">
-        <p class="text-label-md text-on-surface-variant">© 2026 IDS Expense Management - Tous droits réservés.</p>
-    </footer>
+    @if (!isPasswordChangeRequired) {
+        <footer class="mt-auto p-[24px] text-center border-t border-outline-variant bg-surface-container-low">
+            <p class="text-label-md text-on-surface-variant">© 2026 IDS Expense Management - Tous droits réservés.</p>
+        </footer>
+    }
 </main>
 

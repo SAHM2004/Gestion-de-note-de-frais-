@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal, effect } from '@angular/core';
+import { Component, inject, computed, signal, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExpenseService } from '../../../core/services/expense.service';
@@ -12,10 +12,14 @@ import { AttachmentService } from '../../../core/services/attachment.service';
   templateUrl: './approval-list.html',
   styleUrl: './approval-list.css',
 })
-export class ApprovalList {
+export class ApprovalList implements OnInit {
   public expenseService = inject(ExpenseService);
   public authService = inject(AuthService);
   public attachmentService = inject(AttachmentService);
+
+  ngOnInit() {
+    this.expenseService.refreshExpenses().subscribe();
+  }
 
   public getGlobalAttachments(reportId: number): any[] {
     const report = this.expenseService.expenses().find(r => r.id === reportId);
@@ -182,12 +186,21 @@ export class ApprovalList {
     this.showApproveModal.set(false);
   }
 
+  public isSubmitting = signal(false);
+
   public confirmApprove() {
     const current = this.selectedReport();
     if (current) {
+      this.isSubmitting.set(true);
       this.expenseService.approveReport(current.id, this.approveComment() || undefined).subscribe({
-        next: () => this.closeApproveModal(),
-        error: (err) => alert('Erreur approbation : ' + (err.error?.message ?? err.message))
+        next: () => {
+          this.closeApproveModal();
+          this.expenseService.refreshExpenses().subscribe(() => this.isSubmitting.set(false));
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          alert('Erreur approbation : ' + (err.error?.message ?? err.message));
+        }
       });
     }
   }
@@ -206,9 +219,16 @@ export class ApprovalList {
     const current = this.selectedReport();
     const reason = this.rejectionReason().trim();
     if (current && reason) {
+      this.isSubmitting.set(true);
       this.expenseService.rejectReport(current.id, reason).subscribe({
-        next: () => this.closeRejectModal(),
-        error: (err) => alert('Erreur rejet : ' + (err.error?.message ?? err.message))
+        next: () => {
+          this.closeRejectModal();
+          this.expenseService.refreshExpenses().subscribe(() => this.isSubmitting.set(false));
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          alert('Erreur rejet : ' + (err.error?.message ?? err.message));
+        }
       });
     }
   }
@@ -225,9 +245,16 @@ export class ApprovalList {
   public confirmPay() {
     const current = this.selectedReport();
     if (current) {
+      this.isSubmitting.set(true);
       this.expenseService.markAsPaid(current.id).subscribe({
-        next: () => this.closePayModal(),
-        error: (err) => alert('Erreur lors du remboursement : ' + (err.error?.message ?? err.message))
+        next: () => {
+          this.closePayModal();
+          this.expenseService.refreshExpenses().subscribe(() => this.isSubmitting.set(false));
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          alert('Erreur lors du remboursement : ' + (err.error?.message ?? err.message));
+        }
       });
     }
   }

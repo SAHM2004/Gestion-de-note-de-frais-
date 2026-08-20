@@ -5,9 +5,11 @@ import lombok.Data;
 import java.util.List;
 
 @Data
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 @Entity
 @Table(name = "modeles_workflow")
 public class WorkflowTemplate {
+    public WorkflowTemplate() {}
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -28,6 +28,8 @@ export interface User {
   email: string;
   role: RoleType;
   department?: Department;
+  active?: boolean;
+  requirePasswordChange?: boolean;
 }
 
 export interface WorkflowTemplate {
@@ -109,6 +111,7 @@ export interface ExpenseReportApiResponse {
   employeeId: number;
   employeeName: string;
   employeeDepartmentName?: string;
+  employeeRole?: string;
   currentStepRole?: string;
   currentStepName?: string;
   rejectionReason?: string;

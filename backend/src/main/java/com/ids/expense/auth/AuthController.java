@@ -15,13 +15,55 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
-
     private final AuthService authService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    @GetMapping("/fix-db")
+    public ResponseEntity<String> fixDb() {
+        StringBuilder result = new StringBuilder();
+        try {
+            jdbcTemplate.execute("ALTER TABLE utilisateurs ADD COLUMN active BOOLEAN DEFAULT true");
+            result.append("Colonne 'active' ajoutée.\n");
+        } catch (Exception e) {
+            result.append("Colonne 'active' déjà présente.\n");
+        }
+        try {
+            jdbcTemplate.execute("ALTER TABLE utilisateurs ADD COLUMN force_password_change BOOLEAN DEFAULT true");
+            result.append("Colonne 'force_password_change' ajoutée.\n");
+        } catch (Exception e) {
+            result.append("Colonne 'force_password_change' déjà présente.\n");
+        }
+        try {
+            jdbcTemplate.execute("UPDATE departements SET workflow_template_id = (SELECT id FROM modeles_workflow WHERE name LIKE '%Technique%' LIMIT 1) WHERE name LIKE '%ALVANET%' OR name LIKE '%SLF%' OR name LIKE '%SCR%'");
+            jdbcTemplate.execute("UPDATE departements SET workflow_template_id = (SELECT id FROM modeles_workflow WHERE name LIKE '%Générale%' LIMIT 1) WHERE name NOT LIKE '%ALVANET%' AND name NOT LIKE '%SLF%' AND name NOT LIKE '%SCR%'");
+            result.append("Workflows techniques (avec DT) et généraux (sans DT) mis à jour.\n");
+        } catch (Exception e) {
+            result.append("Erreur workflow: ").append(e.getMessage()).append("\n");
+        }
+        try {
+            jdbcTemplate.execute("UPDATE departements SET name = REPLACE(name, 'Direction Technique - ', '')");
+            jdbcTemplate.execute("UPDATE departements SET name = REPLACE(name, 'Direction Générale - ', '')");
+            jdbcTemplate.execute("UPDATE departements SET name = REPLACE(name, 'Direction technique - ', '')");
+            jdbcTemplate.execute("UPDATE departements SET name = REPLACE(name, 'Direction générale - ', '')");
+            jdbcTemplate.execute("UPDATE departements SET name = 'RH (Ressources Humaines)' WHERE name = 'RH'");
+            result.append("Noms des départements nettoyés.\n");
+            
+            java.util.List<String> deps = jdbcTemplate.queryForList("SELECT name FROM departements", String.class);
+            result.append("Départements actuels: ").append(deps.toString()).append("\n");
+        } catch (Exception e) {
+            result.append("Erreur renommer: ").append(e.getMessage()).append("\n");
+        }
+        return ResponseEntity.ok(result.toString());
+    }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest) {
-        AuthResponse response = authService.authenticate(loginRequest);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        try {
+            AuthResponse response = authService.authenticate(loginRequest);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
     }
 
     @GetMapping("/debug-auth")

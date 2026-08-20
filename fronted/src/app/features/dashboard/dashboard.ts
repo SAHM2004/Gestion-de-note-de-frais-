@@ -25,15 +25,16 @@ export class DashboardComponent implements OnInit {
   public analyticsSummary = signal<any>(null);
 
   ngOnInit() {
+    this.expenseService.refreshExpenses().subscribe();
     this.loadAnalytics();
   }
 
   public loadAnalytics() {
-    this.expenseService.getAnalyticsSummary().subscribe({
+    this.expenseService.getPersonalSummary().subscribe({
       next: (summary) => {
         this.analyticsSummary.set(summary);
       },
-      error: (err) => console.error('Erreur chargement des stats de dashboard', err)
+      error: (err) => console.error('Erreur chargement des stats personnelles', err)
     });
   }
 
@@ -60,13 +61,25 @@ export class DashboardComponent implements OnInit {
     return this.adminData.users().filter(u => u.role === role).length;
   }
 
-  public adminStats = computed(() => ({
-    users: this.adminData.users().length,
-    departments: this.adminData.departments().length,
-    categories: this.adminData.categories().length,
-    managers: this.adminData.users().filter(u => u.role === RoleType.MANAGER).length,
-    employees: this.adminData.users().filter(u => u.role === RoleType.EMPLOYEE).length
-  }));
+  public adminStats = computed(() => {
+    const users = this.adminData.users();
+    const departments = this.adminData.departments();
+    const managerIds = new Set<number>();
+    users.filter(u => u.role === RoleType.MANAGER).forEach(u => managerIds.add(u.id));
+    departments.forEach(d => {
+      if (d.manager && d.manager.id) {
+        managerIds.add(d.manager.id);
+      }
+    });
+
+    return {
+      users: users.length,
+      departments: departments.length,
+      categories: this.adminData.categories().length,
+      managers: managerIds.size,
+      employees: users.filter(u => u.role === RoleType.EMPLOYEE).length
+    };
+  });
 
   public userExpenses = computed(() => {
     return this.expenseService.getExpensesForUser();
@@ -105,6 +118,10 @@ export class DashboardComponent implements OnInit {
 
   public totalPaid = computed(() => {
     return this.analyticsSummary()?.totalPaid ?? 0;
+  });
+
+  public totalRejected = computed(() => {
+    return this.analyticsSummary()?.totalRejected ?? 0;
   });
 
   public categoryStats = computed(() => {
@@ -162,20 +179,28 @@ export class DashboardComponent implements OnInit {
   }
 
   public getWorkflowStepsForReport(report: ExpenseReport): { name: string, role: RoleType, status: 'completed' | 'current' | 'pending' | 'rejected' }[] {
-    const isTechnical = report.employee.department?.name?.includes('Direction Technique') ?? false;
-    
-    const stepsConfig = isTechnical 
-      ? [
-          { name: 'Validation Manager', role: RoleType.MANAGER },
-          { name: 'Validation Directeur Technique', role: RoleType.TECHNICAL_DIRECTOR },
-          { name: 'Validation Directeur Général', role: RoleType.GENERAL_DIRECTOR },
-          { name: 'Validation Comptabilité', role: RoleType.ACCOUNTANT }
-        ]
-      : [
-          { name: 'Validation Manager', role: RoleType.MANAGER },
-          { name: 'Validation Directeur Général', role: RoleType.GENERAL_DIRECTOR },
-          { name: 'Validation Comptabilité', role: RoleType.ACCOUNTANT }
-        ];
+    let stepsConfig: { name: string; role: RoleType }[] = [
+      { name: 'Validation Manager', role: RoleType.MANAGER },
+      { name: 'Validation Directeur Technique', role: RoleType.TECHNICAL_DIRECTOR },
+      { name: 'Validation Directeur Général', role: RoleType.GENERAL_DIRECTOR },
+      { name: 'Validation Comptabilité', role: RoleType.ACCOUNTANT }
+    ];
+
+    const deptName = report.employee.department?.name ?? '';
+    const isTechnical = deptName.includes('ALVANET') || deptName.includes('SLF') || deptName.includes('SCR');
+    if (!isTechnical) {
+      stepsConfig = stepsConfig.filter(s => s.role !== RoleType.TECHNICAL_DIRECTOR);
+    }
+
+    const employeeRole = report.employee.role;
+
+    if (employeeRole === RoleType.GENERAL_DIRECTOR) {
+      stepsConfig = stepsConfig.filter(s => ![RoleType.MANAGER, RoleType.TECHNICAL_DIRECTOR, RoleType.GENERAL_DIRECTOR].includes(s.role));
+    } else if (employeeRole === RoleType.TECHNICAL_DIRECTOR) {
+      stepsConfig = stepsConfig.filter(s => ![RoleType.MANAGER, RoleType.TECHNICAL_DIRECTOR].includes(s.role));
+    } else if (employeeRole === RoleType.MANAGER) {
+      stepsConfig = stepsConfig.filter(s => s.role !== RoleType.MANAGER);
+    }
 
     if (report.status === ExpenseStatus.DRAFT) {
       return stepsConfig.map(s => ({ ...s, status: 'pending' }));

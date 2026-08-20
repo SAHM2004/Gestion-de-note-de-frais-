@@ -2,6 +2,11 @@ spring:
   application:
     name: expense-manager
 
+  jackson:
+    deserialization:
+      fail-on-null-for-primitives: false
+      fail-on-unknown-properties: false
+
   datasource:
     url: jdbc:postgresql://localhost:5432/gestion_note_de_frais
     username: postgres
@@ -18,10 +23,10 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   mail:
-    host: mail.ids.tg
+    host: mail.idstechnologie.com
     port: 465
-    username: no-reply@ids.tg
-    password: sveHFK!5
+    username: loic.mavoungou@idstechnologie.com
+    password: Dragon228@2026
     protocol: smtp
     properties:
       mail:
@@ -63,4 +68,13 @@ app:
     allowed-content-types:
       - application/pdf
       - image/jpeg
+      - image/jpg
+      - image/pjpeg
       - image/png
+      - image/webp
+      - image/bmp
+      - image/tiff
+      - image/heic
+      - application/msword
+      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      - application/octet-stream

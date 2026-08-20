@@ -55,7 +55,7 @@ export class AdminDataService {
   // ---- Utilisateurs ----
 
   public loadUsers(): Observable<any> {
-    return this.http.get<any>(`${API_ENDPOINTS.users}?size=1000`).pipe(
+    return this.http.get<any>(`${API_ENDPOINTS.users.base}?size=1000`).pipe(
       tap(response => {
         // Le backend retourne une Page<User>
         const userList: User[] = response.content ?? response;
@@ -65,20 +65,38 @@ export class AdminDataService {
   }
 
   public createUser(user: Partial<User> & { password?: string }): Observable<any> {
-    return this.http.post<User>(API_ENDPOINTS.users, user).pipe(
-      switchMap(() => this.loadUsers())
+    return this.http.post<User>(API_ENDPOINTS.users.base, user).pipe(
+      switchMap(() => {
+        this.loadDepartments();
+        return this.loadUsers();
+      })
     );
   }
 
   public updateUser(id: number, user: Partial<User>): Observable<any> {
-    return this.http.put<User>(`${API_ENDPOINTS.users}/${id}`, user).pipe(
-      switchMap(() => this.loadUsers())
+    return this.http.put<User>(`${API_ENDPOINTS.users.base}/${id}`, user).pipe(
+      switchMap(() => {
+        this.loadDepartments();
+        return this.loadUsers();
+      })
     );
   }
 
   public deleteUser(id: number): Observable<any> {
-    return this.http.delete<void>(`${API_ENDPOINTS.users}/${id}`).pipe(
-      switchMap(() => this.loadUsers())
+    return this.http.delete<void>(`${API_ENDPOINTS.users.base}/${id}`).pipe(
+      switchMap(() => {
+        this.loadDepartments();
+        return this.loadUsers();
+      })
+    );
+  }
+
+  public toggleUserActive(id: number): Observable<any> {
+    return this.http.put<User>(API_ENDPOINTS.users.toggleActive(id), {}).pipe(
+      switchMap(() => {
+        this.loadDepartments();
+        return this.loadUsers();
+      })
     );
   }
 
@@ -107,18 +125,27 @@ export class AdminDataService {
   public saveDepartment(department: Partial<Department>, editId?: number): Observable<any> {
     if (editId != null) {
       return this.http.put<Department>(`${API_ENDPOINTS.departments}/${editId}`, department).pipe(
-        switchMap(() => { this.loadDepartments(); return [null]; })
+        switchMap(() => {
+          this.loadDepartments();
+          return this.loadUsers();
+        })
       );
     } else {
       return this.http.post<Department>(API_ENDPOINTS.departments, department).pipe(
-        switchMap(() => { this.loadDepartments(); return [null]; })
+        switchMap(() => {
+          this.loadDepartments();
+          return this.loadUsers();
+        })
       );
     }
   }
 
   public deleteDepartment(id: number): Observable<any> {
     return this.http.delete<void>(`${API_ENDPOINTS.departments}/${id}`).pipe(
-      switchMap(() => { this.loadDepartments(); return [null]; })
+      switchMap(() => {
+        this.loadDepartments();
+        return this.loadUsers();
+      })
     );
   }
 
@@ -133,6 +160,8 @@ export class AdminDataService {
   }
 
   public isTechnicalDepartment(dept?: Department | null): boolean {
-    return !!dept?.name?.includes('Direction Technique');
+    if (!dept || !dept.name) return false;
+    const nameLower = dept.name.toLowerCase();
+    return nameLower.includes('direction technique') || nameLower.includes('alvanet') || nameLower.includes('slf') || nameLower.includes('scr');
   }
 }

@@ -14,7 +14,8 @@ export function getRoleLabel(role: RoleType): string {
 
 export function isTechnicalDepartment(departmentName?: string): boolean {
   if (!departmentName) return false;
-  return departmentName.toLowerCase().includes('direction technique');
+  const nameLower = departmentName.toLowerCase();
+  return nameLower.includes('direction technique') || nameLower.includes('alvanet') || nameLower.includes('slf') || nameLower.includes('scr');
 }
 
 export function canViewGlobalAnalytics(role: RoleType): boolean {

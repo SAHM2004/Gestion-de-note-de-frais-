@@ -58,19 +58,19 @@ public class ReportService {
             addInfoRow(infoTable, "Intitulé :", report.getTitle(), labelFont, valueFont);
             addInfoRow(infoTable, "Employé :", report.getEmployeeName(), labelFont, valueFont);
             addInfoRow(infoTable, "Département :", report.getEmployeeDepartmentName() != null ? report.getEmployeeDepartmentName() : "N/A", labelFont, valueFont);
-            addInfoRow(infoTable, "Statut actuel :", report.getStatus().name(), labelFont, valueFont);
+            addInfoRow(infoTable, "Statut actuel :", getStatusLabelInFrench(report), labelFont, valueFont);
             addInfoRow(infoTable, "Période du :", (report.getDateFrom() != null ? report.getDateFrom().toString() : "-") + " au " + (report.getDateTo() != null ? report.getDateTo().toString() : "-"), labelFont, valueFont);
 
             document.add(infoTable);
 
             // Table of Lines
-            PdfPTable table = new PdfPTable(5);
+            PdfPTable table = new PdfPTable(4);
             table.setWidthPercentage(100);
-            table.setWidths(new float[]{2f, 3f, 3f, 2f, 2f});
+            table.setWidths(new float[]{2f, 3f, 3f, 2f});
             table.setSpacingBefore(10);
 
             // Table Header
-            String[] headers = {"Date", "Catégorie", "Description", "Montant", "Plafond"};
+            String[] headers = {"Date", "Catégorie", "Description", "Montant"};
             for (String h : headers) {
                 PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
                 cell.setBackgroundColor(java.awt.Color.DARK_GRAY);
@@ -91,26 +91,30 @@ public class ReportService {
 
                     BigDecimal amount = line.getAmount() != null ? line.getAmount() : BigDecimal.ZERO;
                     total = total.add(amount);
-                    PdfPCell amountCell = new PdfPCell(new Phrase(amount + " " + report.getCurrency(), valueFont));
+                    PdfPCell amountCell = new PdfPCell(new Phrase(formatAmount(amount) + " " + report.getCurrency(), valueFont));
                     amountCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
                     table.addCell(amountCell);
-
-                    String ceilingStr = line.getCategoryMaxAmount() != null ? line.getCategoryMaxAmount() + " €" : "Sans limite";
-                    PdfPCell ceilingCell = new PdfPCell(new Phrase(ceilingStr, Boolean.TRUE.equals(line.getIsOverCeiling()) ? warningFont : valueFont));
-                    ceilingCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                    table.addCell(ceilingCell);
                 }
             }
 
             document.add(table);
 
             // Total Summary
-            Paragraph totalParagraph = new Paragraph("TOTAL À REMBOURSER : " + total + " " + (report.getCurrency() != null ? report.getCurrency() : "EUR"),
+            Paragraph totalParagraph = new Paragraph("TOTAL À REMBOURSER : " + formatAmount(total) + " " + (report.getCurrency() != null ? report.getCurrency() : "EUR"),
                     FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, java.awt.Color.BLACK));
             totalParagraph.setAlignment(Element.ALIGN_RIGHT);
             totalParagraph.setSpacingBefore(15);
-            totalParagraph.setSpacingAfter(20);
+            totalParagraph.setSpacingAfter(10);
             document.add(totalParagraph);
+
+            String amountInWords = convertNumberToWords(total.longValue()) + " " + getCurrencyInWords(report.getCurrency(), total);
+            amountInWords = amountInWords.trim().substring(0, 1).toUpperCase() + amountInWords.trim().substring(1);
+            Paragraph wordsParagraph = new Paragraph("Arrêtée la présente note de frais à la somme de : " + amountInWords,
+                    FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10, java.awt.Color.BLACK));
+            wordsParagraph.setAlignment(Element.ALIGN_LEFT);
+            wordsParagraph.setSpacingBefore(5);
+            wordsParagraph.setSpacingAfter(20);
+            document.add(wordsParagraph);
 
             // Signatures block
             PdfPTable sigTable = new PdfPTable(2);
@@ -128,7 +132,6 @@ public class ReportService {
             sigTable.addCell(c1);
             sigTable.addCell(c2);
             document.add(sigTable);
-
             document.close();
         } catch (Exception e) {
             throw new RuntimeException("Erreur lors de la génération du PDF de la note de frais", e);
@@ -149,7 +152,7 @@ public class ReportService {
 
             try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
                  CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.EXCEL.withDelimiter(';')
-                         .withHeader("ID Note", "Titre Note", "Employé", "Département", "Statut", "Date Dépense", "Catégorie", "Description Dépense", "Montant Dépense", "Plafond Catégorie", "Dépassement Plafond", "Devise"))) {
+                          .withHeader("ID Note", "Titre Note", "Employé", "Département", "Statut", "Date Dépense", "Catégorie", "Description Dépense", "Montant Dépense", "Devise"))) {
 
                 for (ExpenseReportResponse report : reports) {
                     if (report.getLines() != null && !report.getLines().isEmpty()) {
@@ -159,15 +162,13 @@ public class ReportService {
                                     report.getTitle(),
                                     report.getEmployeeName(),
                                     report.getEmployeeDepartmentName() != null ? report.getEmployeeDepartmentName() : "N/A",
-                                    report.getStatus() != null ? report.getStatus().name() : "",
+                                    getStatusLabelInFrench(report),
                                     line.getExpenseDate() != null ? line.getExpenseDate().format(formatter) : "",
                                     line.getCategoryName() != null ? line.getCategoryName() : "N/A",
                                     line.getDescription() != null ? line.getDescription() : "",
                                     line.getAmount() != null ? line.getAmount() : "0.00",
-                                    line.getCategoryMaxAmount() != null ? line.getCategoryMaxAmount() : "Sans limite",
-                                    Boolean.TRUE.equals(line.getIsOverCeiling()) ? "OUI (Dépassement)" : "NON",
                                     report.getCurrency() != null ? report.getCurrency() : "EUR"
-                            );
+                             );
                         }
                     } else {
                         // Header record if no line present
@@ -176,13 +177,11 @@ public class ReportService {
                                 report.getTitle(),
                                 report.getEmployeeName(),
                                 report.getEmployeeDepartmentName() != null ? report.getEmployeeDepartmentName() : "N/A",
-                                report.getStatus() != null ? report.getStatus().name() : "",
+                                getStatusLabelInFrench(report),
                                 report.getDateFrom() != null ? report.getDateFrom().format(formatter) : "",
                                 "N/A",
                                 report.getDescription() != null ? report.getDescription() : "",
                                 "0.00",
-                                "N/A",
-                                "NON",
                                 report.getCurrency() != null ? report.getCurrency() : "EUR"
                         );
                     }
@@ -207,5 +206,158 @@ public class ReportService {
 
         table.addCell(cLabel);
         table.addCell(cValue);
+    }
+
+    private String getStatusLabelInFrench(ExpenseReportResponse report) {
+        if (report.getStatus() == null) return "-";
+        switch (report.getStatus()) {
+            case DRAFT:
+                return "Brouillon";
+            case IN_PROGRESS:
+                String step = report.getCurrentStepName() != null ? " (" + report.getCurrentStepName() + ")" : "";
+                return "En cours de validation" + step;
+            case APPROVED:
+                return "Approuvé";
+            case PAID:
+                return "Remboursé";
+            case REJECTED:
+                String rejectedStep = report.getRejectedAtStepName() != null ? " (à l'étape : " + report.getRejectedAtStepName() + ")" : "";
+                return "Rejeté" + rejectedStep;
+            default:
+                return report.getStatus().name();
+        }
+    }
+
+    private String getCurrencyInWords(String currency, BigDecimal amount) {
+        if (currency == null) return "";
+        boolean plural = amount.compareTo(BigDecimal.ONE) > 0;
+        switch (currency.toUpperCase()) {
+            case "FCFA":
+            case "XOF":
+            case "XAF":
+                return "Francs CFA";
+            case "EUR":
+            case "EURO":
+                return plural ? "Euros" : "Euro";
+            case "USD":
+            case "DOLLAR":
+                return plural ? "Dollars" : "Dollar";
+            default:
+                return currency;
+        }
+    }
+
+    private static final String[] UNITS = {
+        "", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"
+    };
+    
+    private static final String[] TENS = {
+        "", "dix", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante-dix", "quatre-vingt", "quatre-vingt-dix"
+    };
+
+    private String convertNumberToWords(long number) {
+        if (number == 0) {
+            return "zéro";
+        }
+        return convertHelper(number).trim().replaceAll("\\s+", " ");
+    }
+
+    private String convertHelper(long number) {
+        if (number < 0) {
+            return "moins " + convertHelper(-number);
+        }
+        
+        if (number < 10) {
+            return UNITS[(int) number];
+        }
+        
+        if (number < 20) {
+            switch ((int) number) {
+                case 10: return "dix";
+                case 11: return "onze";
+                case 12: return "douze";
+                case 13: return "treize";
+                case 14: return "quatorze";
+                case 15: return "quinze";
+                case 16: return "seize";
+                default: return "dix-" + UNITS[(int) (number % 10)];
+            }
+        }
+        
+        if (number < 100) {
+            int ten = (int) (number / 10);
+            int unit = (int) (number % 10);
+            
+            if (ten == 7) {
+                if (unit == 1) return "soixante et onze";
+                return "soixante-" + convertHelper(10 + unit);
+            }
+            if (ten == 9) {
+                return "quatre-vingt-" + convertHelper(10 + unit);
+            }
+            if (unit == 0) {
+                if (ten == 8) return "quatre-vingts";
+                return TENS[ten];
+            }
+            if (unit == 1) {
+                return TENS[ten] + " et un";
+            }
+            return TENS[ten] + "-" + UNITS[unit];
+        }
+        
+        if (number < 1000) {
+            int hundred = (int) (number / 100);
+            int remainder = (int) (number % 100);
+            String hundredStr = hundred == 1 ? "cent" : UNITS[hundred] + " cent";
+            if (hundred > 1 && remainder == 0) {
+                hundredStr += "s";
+            }
+            if (remainder == 0) {
+                return hundredStr;
+            }
+            return hundredStr + " " + convertHelper(remainder);
+        }
+        
+        if (number < 1000000) {
+            long thousand = number / 1000;
+            long remainder = number % 1000;
+            String thousandStr = thousand == 1 ? "mille" : convertHelper(thousand) + " mille";
+            if (remainder == 0) {
+                return thousandStr;
+            }
+            return thousandStr + " " + convertHelper(remainder);
+        }
+        
+        if (number < 1000000000L) {
+            long million = number / 1000000;
+            long remainder = number % 1000000;
+            String millionStr = million == 1 ? "un million" : convertHelper(million) + " millions";
+            if (remainder == 0) {
+                return millionStr;
+            }
+            return millionStr + " " + convertHelper(remainder);
+        }
+        
+        long milliard = number / 1000000000L;
+        long remainder = number % 1000000000L;
+        String milliardStr = milliard == 1 ? "un milliard" : convertHelper(milliard) + " milliards";
+        if (remainder == 0) {
+            return milliardStr;
+        }
+        return milliardStr + " " + convertHelper(remainder);
+    }
+
+    private String formatAmount(BigDecimal amount) {
+        if (amount == null) return "0";
+        java.text.DecimalFormatSymbols symbols = new java.text.DecimalFormatSymbols();
+        symbols.setGroupingSeparator('.');
+        java.text.DecimalFormat df;
+        if (amount.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0) {
+            df = new java.text.DecimalFormat("#,##0", symbols);
+        } else {
+            symbols.setDecimalSeparator(',');
+            df = new java.text.DecimalFormat("#,##0.00", symbols);
+        }
+        return df.format(amount);
     }
 }

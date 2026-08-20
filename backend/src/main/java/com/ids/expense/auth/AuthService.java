@@ -27,20 +27,40 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     public AuthResponse authenticate(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
+        Authentication authentication;
+        String email = request.getEmail() != null ? request.getEmail().replaceAll("\\s+", "").trim() : "";
+        String pass = request.getPassword() != null ? request.getPassword().trim() : "";
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, pass)
+            );
+        } catch (org.springframework.security.authentication.DisabledException e) {
+            throw new RuntimeException("Votre compte a été désactivé. Veuillez contacter l'administrateur.");
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            throw new RuntimeException("Identifiants incorrects. Vérifiez votre e-mail et mot de passe.");
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur de connexion : " + (e.getMessage() != null ? e.getMessage() : "Identifiants invalides"));
+        }
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         String jwt = jwtUtil.generateToken(userDetails);
+
+        User user = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+        Long departmentId = user.getDepartment() != null ? user.getDepartment().getId() : null;
+        String departmentName = user.getDepartment() != null ? user.getDepartment().getName() : null;
 
         return new AuthResponse(
                 jwt,
                 userDetails.getId(),
                 userDetails.getName(),
                 userDetails.getEmail(),
-                userDetails.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "")
+                userDetails.getAuthorities().iterator().next().getAuthority().replace("ROLE_", ""),
+                userDetails.isForcePasswordChange(),
+                departmentId,
+                departmentName
         );
     }
 
@@ -53,6 +73,7 @@ public class AuthService {
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setForcePasswordChange(false); // Le mot de passe a été changé par l'utilisateur
         userRepository.save(user);
     }
 

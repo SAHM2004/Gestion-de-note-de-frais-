@@ -18,6 +18,8 @@ public class UserDetailsImpl implements UserDetails {
     private String name;
     private String email;
     private String password;
+    private boolean active;
+    private boolean forcePasswordChange;
     private Collection<? extends GrantedAuthority> authorities;
 
     public static UserDetailsImpl build(User user) {
@@ -28,6 +30,8 @@ public class UserDetailsImpl implements UserDetails {
                 user.getName(),
                 user.getEmail(),
                 user.getPassword(),
+                user.isActive(),
+                user.isForcePasswordChange(),
                 Collections.singletonList(authority)
         );
     }
@@ -64,6 +68,6 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return active;
     }
 }

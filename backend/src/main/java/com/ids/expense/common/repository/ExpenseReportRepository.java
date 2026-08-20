@@ -8,6 +8,7 @@ import java.util.List;
 @Repository
 public interface ExpenseReportRepository extends JpaRepository<ExpenseReport, Long> {
     List<ExpenseReport> findByEmployeeId(Long employeeId);
+    boolean existsByEmployeeId(Long employeeId);
     
     // Pour Manager et DT (filtre sur leur département)
     List<ExpenseReport> findByCurrentStepRequiredRoleAndEmployeeDepartmentId(com.ids.expense.common.models.RoleType role, Long departmentId);

@@ -194,7 +194,7 @@
                             <span class="px-2 py-0.5 bg-surface-container-high text-xs rounded-full font-semibold">{{ line.category.name }}</span>
                             @if (line.isOverCeiling) {
                               <span class="block mt-1 text-[10px] bg-red-100 text-red-700 font-bold px-1.5 py-0.5 rounded border border-red-200">
-                                ⚠️ Plafond ({{ line.categoryMaxAmount }} €) dépassé
+                                ⚠️ Plafond ({{ line.categoryMaxAmount | number }} FCFA) dépassé
                               </span>
                             }
                           </td>

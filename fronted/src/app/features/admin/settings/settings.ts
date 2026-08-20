@@ -149,9 +149,41 @@ export class Settings implements OnInit {
     return this.authService.getRoleLabel(role);
   }
 
+  public showManagerConfirmModal = signal(false);
+  public managerConfirmData = signal<{
+    newManagerName: string;
+    oldManagerName: string;
+    departmentName: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  public closeManagerConfirmModal() {
+    this.showManagerConfirmModal.set(false);
+    this.managerConfirmData.set(null);
+  }
+
+  public confirmManagerChange() {
+    const data = this.managerConfirmData();
+    if (data && data.onConfirm) {
+      data.onConfirm();
+    }
+    this.closeManagerConfirmModal();
+  }
+
   public saveItem() {
     if (this.modalType === 'category') {
       if (!this.catName || !this.catCode) return;
+      // Validation du plafond
+      if (this.catMaxAmount !== null && this.catMaxAmount !== undefined) {
+        if (this.catMaxAmount < 0) {
+          alert('Le plafond ne peut pas être négatif.');
+          return;
+        }
+        if (this.catMaxAmount < 50) {
+          alert('Le plafond doit être d\'au moins 50 FCFA.');
+          return;
+        }
+      }
       const catPayload: any = { 
         name: this.catName, 
         code: this.catCode.toUpperCase(),
@@ -165,6 +197,7 @@ export class Settings implements OnInit {
         catPayload,
         this.editMode ? this.selectedItemId ?? undefined : undefined
       ).subscribe({
+        next: () => this.closeModal(),
         error: err => alert('Erreur : ' + (err.error?.message ?? err.message))
       });
     } else if (this.modalType === 'department') {
@@ -174,12 +207,24 @@ export class Settings implements OnInit {
       if (this.editMode && this.selectedItemId !== null) {
         depPayload.id = this.selectedItemId;
       }
-      this.adminData.saveDepartment(
-        depPayload,
-        this.editMode ? this.selectedItemId ?? undefined : undefined
-      ).subscribe({
-        error: err => alert('Erreur : ' + (err.error?.message ?? err.message))
-      });
+
+      if (mgrId != null) {
+        const currentDept = this.departments().find(d => d.id === this.selectedItemId);
+        const oldManager = currentDept?.manager;
+        if (oldManager && oldManager.id !== mgrId) {
+          const newManager = this.users().find(u => u.id === mgrId);
+          this.managerConfirmData.set({
+            newManagerName: newManager?.name || 'Le nouvel utilisateur',
+            oldManagerName: oldManager.name,
+            departmentName: currentDept?.name || this.depName,
+            onConfirm: () => this.executeSaveDepartment(depPayload)
+          });
+          this.showManagerConfirmModal.set(true);
+          return;
+        }
+      }
+      this.executeSaveDepartment(depPayload);
+
     } else if (this.modalType === 'user') {
       if (!this.userName || !this.userEmail) return;
       const depId = this.userDepId ? +this.userDepId : null;
@@ -191,17 +236,46 @@ export class Settings implements OnInit {
         ...(this.editMode ? {} : { password: this.userInitialPassword })
       };
 
-      if (this.editMode && this.selectedItemId !== null) {
-        this.adminData.updateUser(this.selectedItemId, userPayload).subscribe({
-          error: err => alert('Erreur mise à jour : ' + (err.error?.message ?? err.message))
-        });
-      } else {
-        this.adminData.createUser(userPayload).subscribe({
-          error: err => alert('Erreur création : ' + (err.error?.message ?? err.message))
-        });
+      if (this.userRole === RoleType.MANAGER && depId != null) {
+        const targetDept = this.departments().find(d => d.id === depId);
+        const existingDeptManager = targetDept?.manager;
+        if (existingDeptManager && (!this.editMode || existingDeptManager.id !== this.selectedItemId)) {
+          this.managerConfirmData.set({
+            newManagerName: this.userName,
+            oldManagerName: existingDeptManager.name,
+            departmentName: targetDept?.name || '',
+            onConfirm: () => this.executeSaveUser(userPayload)
+          });
+          this.showManagerConfirmModal.set(true);
+          return;
+        }
       }
+      this.executeSaveUser(userPayload);
     }
-    this.closeModal();
+  }
+
+  private executeSaveDepartment(depPayload: any) {
+    this.adminData.saveDepartment(
+      depPayload,
+      this.editMode ? this.selectedItemId ?? undefined : undefined
+    ).subscribe({
+      next: () => this.closeModal(),
+      error: err => alert('Erreur : ' + (err.error?.message ?? err.message))
+    });
+  }
+
+  private executeSaveUser(userPayload: any) {
+    if (this.editMode && this.selectedItemId !== null) {
+      this.adminData.updateUser(this.selectedItemId, userPayload).subscribe({
+        next: () => this.closeModal(),
+        error: err => alert('Erreur mise à jour : ' + (err.error?.message ?? err.message))
+      });
+    } else {
+      this.adminData.createUser(userPayload).subscribe({
+        next: () => this.closeModal(),
+        error: err => alert('Erreur création : ' + (err.error?.message ?? err.message))
+      });
+    }
   }
 
   public showDeleteModal = signal(false);
@@ -220,6 +294,14 @@ export class Settings implements OnInit {
   public deleteUser(id: number, label: string = 'cet utilisateur') {
     this.deleteTarget.set({ type: 'user', id, label });
     this.showDeleteModal.set(true);
+  }
+
+  public toggleUserActive(user: User) {
+    if (confirm(`Voulez-vous vraiment ${user.active !== false ? 'désactiver' : 'activer'} l'utilisateur ${user.name} ?`)) {
+      this.adminData.toggleUserActive(user.id).subscribe({
+        error: err => alert('Erreur : ' + (err.error?.message ?? err.message))
+      });
+    }
   }
 
   public closeDeleteModal() {

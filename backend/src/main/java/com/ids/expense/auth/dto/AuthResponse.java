@@ -11,4 +11,7 @@ public class AuthResponse {
     private String name;
     private String email;
     private String role;
+    private boolean requirePasswordChange;
+    private Long departmentId;
+    private String departmentName;
 }

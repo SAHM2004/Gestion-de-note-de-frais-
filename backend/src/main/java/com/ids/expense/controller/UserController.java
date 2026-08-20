@@ -43,6 +43,12 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUser(id, userDetails));
     }
 
+    @PutMapping("/{id}/toggle-active")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<User> toggleUserActive(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.toggleUserActive(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
